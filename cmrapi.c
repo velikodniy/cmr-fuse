@@ -4,6 +4,7 @@
 #include <string.h>
 #include <curl/curl.h>
 #include <jansson.h>
+#include "list.h"
 
 #define RESPONSE_BUFFER_SIZE (1024*1024)
 
@@ -216,7 +217,55 @@ int cmr_get_shard_urls(struct cmr_t *cmr) {
   return 0;
 }
 
-//int cmr_list_dir(struct cmr_t *cmr, list_t *content);
+int cmr_list_dir(struct cmr_t *cmr, const char *dir, struct list_t **content) {
+  //list_init(content);
+  CURLcode res;
+
+  struct buffer_t buffer;
+  buffer_init(&buffer);
+
+  char *encoded_dir = curl_easy_escape(cmr->curl, dir, 0);
+  
+  size_t du_size = snprintf(NULL, 0, "https://cloud.mail.ru/api/v2/folder?token=%s&home=%s", cmr->token, encoded_dir);
+  char *dir_url = malloc(1 + du_size);
+  snprintf(dir_url, du_size+1, "https://cloud.mail.ru/api/v2/folder?token=%s&home=%s", cmr->token, encoded_dir);
+  
+  cmr_response_to_buffer(cmr, &buffer);
+  curl_easy_setopt(cmr->curl, CURLOPT_URL, dir_url);
+  res = curl_easy_perform(cmr->curl);
+  if(res != CURLE_OK) {
+    fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+    return 1;
+  }
+  cmr_response_ignore(cmr);
+
+  list_init(content);
+  
+  json_t *root, *status;
+  json_error_t error;
+  root = json_loads(buffer.data, 0, &error);
+  status = json_object_get(root, "status");
+  if (json_integer_value(status) == 200) {
+    json_t *body, *list, *item, *name, *kind;
+
+    body = json_object_get(root, "body");
+    list = json_object_get(body, "list");
+
+    size_t array_size = json_array_size(list);
+    for(int i = 0; i < array_size; i++) {
+      item = json_array_get(list, i);
+      name = json_object_get(item, "name");
+      char *nm = strdup(json_string_value(name));
+      list_append(content, nm);
+    }
+  }
+
+  json_decref(root); 
+  free(dir_url);
+  curl_free(encoded_dir);
+  buffer_free(&buffer);
+  return 0;
+}
 
 
 size_t cmr_get_file(struct cmr_t *cmr, char *filename, size_t size, off_t offset, char *buf) {
