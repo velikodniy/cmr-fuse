@@ -97,7 +97,7 @@ int main(int argc, char **argv)
     current = current->next;
   }
   
-  //  list_free(&lst);
+  list_free(&lst);
   cmr_finalize(&cmr);
 
   //  return fuse_main(argc, argv, &cmr_ops, NULL);
