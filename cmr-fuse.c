@@ -8,7 +8,7 @@
 
 struct cmr_t cmr;
 
-/*#define FUSE_USE_VERSION 30
+#define FUSE_USE_VERSION 30
 #include <fuse.h>
 
  
@@ -47,16 +47,18 @@ static int cmr_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
     current = current->next;
   }
   
-  //  list_free(&lst);
+  list_free(&lst);
   
   return 0;
 }
 
+
+
 static struct fuse_operations cmr_ops = {
   .readdir= cmr_readdir,
-  .getattr= cmr_getattr
-  //  .read= hello_read,
-}; */
+  .getattr= cmr_getattr,
+  //  .read= cmr_read
+};
 
 int main(int argc, char **argv)
 {
@@ -98,8 +100,8 @@ int main(int argc, char **argv)
   }
   
   list_free(&lst);
-  cmr_finalize(&cmr);
+  //cmr_finalize(&cmr);
 
-  //  return fuse_main(argc, argv, &cmr_ops, NULL);
-  return 0;
+  return fuse_main(argc, argv, &cmr_ops, NULL);
+  //return 0;
 }
