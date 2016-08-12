@@ -217,24 +217,52 @@ int cmr_get_shard_urls(struct cmr_t *cmr) {
 }
 
 //int cmr_list_dir(struct cmr_t *cmr, list_t *content);
-int cmr_get_file(struct cmr_t *cmr, char *filename, size_t size, off_t offset, char *buf) {
-  /*
+size_t cmr_get_file(struct cmr_t *cmr, char *filename, size_t size, off_t offset, char *buf) {
+  CURLcode res;
 
-  strcat(shard_url, "test.txt");
+  if (*filename == '/')
+    filename++;
+  
+  struct buffer_t buffer;
+  buffer_init(&buffer);
 
-  chunk = curl_slist_append(chunk, "Range: bytes=0-3");
- 
-  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_to_buffer);
-  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
-  curl_easy_setopt(curl, CURLOPT_URL, shard_url);
-  res = curl_easy_perform(curl);
-  if(res != CURLE_OK)
-    fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+  char *encoded_filename;
+  char *download_url, *range_header;
+  
+  encoded_filename = curl_easy_escape(cmr->curl, filename, 0);
 
-  printf("%s\n", buffer.data);
+  size_t du_size = snprintf(NULL, 0, "%s%s", cmr->download, encoded_filename);
+  download_url = malloc(1 + du_size);
+  snprintf(download_url, du_size+1, "%s%s", cmr->download, encoded_filename);
 
-   */
-  return 1;
+  size_t rh_size = snprintf(NULL, 0, "Range: bytes=%ld-%ld", offset, offset+size-1);
+  range_header = malloc(1 + rh_size);
+  snprintf(range_header, rh_size+1, "Range: bytes=%ld-%ld", offset, offset+size-1);
+
+  struct curl_slist *headers = NULL;
+  headers = curl_slist_append(headers, range_header);
+  curl_easy_setopt(cmr->curl, CURLOPT_HTTPHEADER, headers);
+
+  cmr_response_to_buffer(cmr, &buffer);
+  curl_easy_setopt(cmr->curl, CURLOPT_URL, download_url);
+  res = curl_easy_perform(cmr->curl);
+  if(res != CURLE_OK) {
+    fprintf(stderr, "cmr_get_file() failed: %s\n", curl_easy_strerror(res));
+    return 0;
+  }
+  curl_easy_setopt(cmr->curl, CURLOPT_HTTPHEADER, NULL);
+  cmr_response_ignore(cmr);
+
+  memcpy(buf, buffer.data, buffer.length);
+
+  size_t len = buffer.length;
+  
+  curl_slist_free_all(headers);
+  curl_free(encoded_filename);
+  free(range_header);
+  free(download_url);
+  buffer_free(&buffer);
+  return len;
 }
 
 void cmr_finalize(struct cmr_t *cmr) {

@@ -32,6 +32,11 @@ int main(int argc, char **argv)
   cmr_get_shard_urls(&cmr);
   printf("DL=%s\n", cmr.download);
   printf("UL=%s\n", cmr.upload);
+
+
+  char buf[5] = {0};
+  cmr_get_file(&cmr, "/test.txt", 4, 0, buf);
+  printf("%s\n", buf);
   
   cmr_finalize(&cmr);
   
