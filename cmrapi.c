@@ -167,42 +167,53 @@ int cmr_get_token(struct cmr_t *cmr) {
   return 0;
 }
 
-int cmr_get_shard(struct cmr_t *cmr) {
-  /*  
+int cmr_get_shard_urls(struct cmr_t *cmr) {
 
   CURLcode res;
 
-curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_to_buffer);
-  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
-  snprintf(request, 1024, "https://cloud.mail.ru/api/v2/dispatcher?token=%s", tok);
-  curl_easy_setopt(curl, CURLOPT_URL, request);
-  res = curl_easy_perform(curl);
-  if(res != CURLE_OK)
-    fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+  struct buffer_t buffer;
+  buffer_init(&buffer);
+  
+  const char *url_string = "https://cloud.mail.ru/api/v2/dispatcher?token=%s";
+  size_t url_size = 1 + strlen(url_string) + strlen(cmr->token);
+  char *url = malloc(url_size);
+  
+  snprintf(url, url_size, url_string, cmr->token);
 
-  printf("%s\n", buffer.data);
+  cmr_response_to_buffer(cmr, &buffer);
+  curl_easy_setopt(cmr->curl, CURLOPT_URL, url);
 
-  buffer_reset(&buffer);
+  res = curl_easy_perform(cmr->curl);
+  if(res != CURLE_OK) {
+    fprintf(stderr, "cmr_get_shard_urls() failed: %s\n", curl_easy_strerror(res));
+    return 1;
+  }
+  cmr_response_ignore(cmr);
 
+  json_t *root, *status;
+  json_error_t error;
   root = json_loads(buffer.data, 0, &error);
-  
-  char shard_url[128];
-  
   status = json_object_get(root, "status");
   if (json_integer_value(status) == 200) {
-    json_t *body, *get, *first, *url;
+    json_t *body, *get, *upload, *first, *url;
 
     body = json_object_get(root, "body");
     get = json_object_get(body, "get");
     first = json_array_get(get, 0);
     url = json_object_get(first, "url");
-    printf("URL = %s\n", json_string_value(url));
-    strncpy(shard_url, json_string_value(url), 128);
+    strncpy(cmr->download, json_string_value(url), 128);
+
+    upload = json_object_get(body, "upload");
+    first = json_array_get(upload, 0);
+    url = json_object_get(first, "url");
+    strncpy(cmr->upload, json_string_value(url), 128);
   }
   
   json_decref(root); 
-  */
-  return 1;
+  buffer_free(&buffer);
+  free(url);
+  
+  return 0;
 }
 
 //int cmr_list_dir(struct cmr_t *cmr, list_t *content);

@@ -3,6 +3,7 @@
 #include <curl/curl.h>
 
 #define TOKEN_SIZE (256)
+#define URL_SIZE (256)
 
 struct cmr_t {
   char *user;
@@ -10,6 +11,8 @@ struct cmr_t {
   char *password;
   CURL *curl;
   char token[TOKEN_SIZE];
+  char download[URL_SIZE];
+  char upload[URL_SIZE];
 };
 
 struct buffer_t {
@@ -28,7 +31,7 @@ void cmr_response_to_buffer(struct cmr_t *cmr, struct buffer_t *buffer);
 int cmr_login(struct cmr_t *cmr);
 int cmr_sdc_cookies(struct cmr_t *cmr);
 int cmr_get_token(struct cmr_t *cmr);
-int cmr_get_shard(struct cmr_t *cmr);
+int cmr_get_shard_urls(struct cmr_t *cmr);
 
 //int cmr_list_dir(struct cmr_t *cmr, list_t *content);
 int cmr_get_file(struct cmr_t *cmr, char *filename, size_t size, off_t offset, char *buf);

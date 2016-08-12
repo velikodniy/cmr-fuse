@@ -25,9 +25,13 @@ int main(int argc, char **argv)
   cmr_init(&cmr, user, domain, password);
   cmr_login(&cmr);
   cmr_sdc_cookies(&cmr);
+
   cmr_get_token(&cmr);
   printf("Token=%s\n", cmr.token);
 
+  cmr_get_shard_urls(&cmr);
+  printf("DL=%s\n", cmr.download);
+  printf("UL=%s\n", cmr.upload);
   
   cmr_finalize(&cmr);
   
