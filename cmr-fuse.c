@@ -72,7 +72,7 @@ int main(int argc, char **argv)
     exit(1);
   }
 
-  //  curl_easy_setopt(curl, CURLOPT_USERAGENT, agent);
+  curl_easy_setopt(curl, CURLOPT_USERAGENT, "PyMailCloud/(0.2)");
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_to_null);
   curl_easy_setopt(curl, CURLOPT_COOKIEFILE, "");
   
