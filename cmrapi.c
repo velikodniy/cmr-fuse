@@ -98,6 +98,7 @@ int cmr_login(struct cmr_t *cmr) {
   
   snprintf(request, request_size, request_string, cmr->user, cmr->domain, cmr->password);
 
+  curl_easy_setopt(cmr->curl, CURLOPT_FOLLOWLOCATION, 0);
   curl_easy_setopt(cmr->curl, CURLOPT_POST, 1);
   curl_easy_setopt(cmr->curl, CURLOPT_URL, "https://auth.mail.ru/cgi-bin/auth");
   curl_easy_setopt(cmr->curl, CURLOPT_POSTFIELDS, request);
@@ -107,6 +108,8 @@ int cmr_login(struct cmr_t *cmr) {
     return 1;
   }
   curl_easy_setopt(cmr->curl, CURLOPT_POST, 0);
+  curl_easy_setopt(cmr->curl, CURLOPT_FOLLOWLOCATION, 1);
+
   free(request);
   return 0;
 }
@@ -115,7 +118,6 @@ int cmr_sdc_cookies(struct cmr_t *cmr) {
   CURLcode res;
 
   curl_easy_setopt(cmr->curl, CURLOPT_URL, "https://auth.mail.ru/sdc?from=https://cloud.mail.ru/home");
-  curl_easy_setopt(cmr->curl, CURLOPT_FOLLOWLOCATION, 1);
   res = curl_easy_perform(cmr->curl);
   if(res != CURLE_OK) {
     fprintf(stderr, "cmr_sdc_cookies() failed: %s\n", curl_easy_strerror(res));
