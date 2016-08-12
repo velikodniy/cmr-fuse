@@ -33,12 +33,12 @@ size_t write_to_buffer(void *curl_buffer, size_t size, size_t nmemb, void *userp
   struct buffer_t *buffer = userptr;
   size_t real_size = size * nmemb;
 
-  /*  while (buffer->length + real_size <= buffer->size) {
+  while (buffer->length + real_size >= buffer->size) {
     size_t new_buffer_size = (size_t)(buffer->size * 1.618);
     buffer->data = realloc(buffer->data, new_buffer_size);
     if (buffer->data == NULL) exit(1);
     buffer->size = new_buffer_size;
-    }*/
+  }
 
   memcpy(buffer->data + buffer->length, curl_buffer, real_size);
   buffer->length += real_size;
@@ -217,6 +217,8 @@ int cmr_get_shard_urls(struct cmr_t *cmr) {
 }
 
 //int cmr_list_dir(struct cmr_t *cmr, list_t *content);
+
+
 size_t cmr_get_file(struct cmr_t *cmr, char *filename, size_t size, off_t offset, char *buf) {
   CURLcode res;
 
