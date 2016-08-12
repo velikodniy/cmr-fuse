@@ -204,7 +204,7 @@ curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_to_buffer);
 }
 
 //int cmr_list_dir(struct cmr_t *cmr, list_t *content);
-int cmr_get_file(struct cmr_t *cmr, char *filename) {
+int cmr_get_file(struct cmr_t *cmr, char *filename, size_t size, off_t offset) {
   /*
 
   strcat(shard_url, "test.txt");
