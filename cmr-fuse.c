@@ -32,7 +32,7 @@ static int cmr_getattr(const char *path, struct stat *stbuf) {
   filelist_cache_data_t *data, query;
 
   strncpy(query.filename, path, sizeof(query.filename));
-  data = (filelist_cache_data_t*)htable_find(&cmr.filelist_cache.files, &query);
+  data = (filelist_cache_data_t*)htable_find(&cmr.filelist_cache.files, (HTableNode*)&query);
 
   if (data == NULL)
     return -ENOENT;
