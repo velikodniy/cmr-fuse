@@ -37,6 +37,6 @@ int cmr_get_token(struct cmr_t *cmr);
 int cmr_get_shard_urls(struct cmr_t *cmr);
 
 int cmr_list_dir(struct cmr_t *cmr, const char *dir, struct list_t **content);
-size_t cmr_get_file(struct cmr_t *cmr, char *filename, size_t size, off_t offset, char *buf);
+size_t cmr_get_file(struct cmr_t *cmr, const char *filename, size_t size, off_t offset, char *buf);
 
 void cmr_finalize(struct cmr_t *cmr);
