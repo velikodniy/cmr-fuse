@@ -25,7 +25,7 @@ include_directories(SYSTEM ${JANSSON_INCLUDE_DIR})
 
 add_definitions(-D_FILE_OFFSET_BITS=64)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11 -Wall -Wextra")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11 -pedantic -Wall -Wextra")
 
 include_directories(containers/include)
 add_subdirectory(containers)
