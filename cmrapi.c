@@ -5,6 +5,7 @@
 #include <curl/curl.h>
 #include <jansson.h>
 #include "list.h"
+#include "filelist_cache.h"
 
 #define RESPONSE_BUFFER_SIZE (1024*1024)
 
@@ -77,7 +78,9 @@ int cmr_init(struct cmr_t *cmr,
   strncpy(cmr->user, user, luser);
   strncpy(cmr->domain, domain, ldomain);
   strncpy(cmr->password, password, lpassword);
-    
+
+  filelist_cache_create(&(cmr->filelist_cache.files));
+
   return 0;
 }
 
@@ -218,7 +221,6 @@ int cmr_get_shard_urls(struct cmr_t *cmr) {
 }
 
 int cmr_list_dir(struct cmr_t *cmr, const char *dir, struct list_t **content) {
-  //list_init(content);
   CURLcode res;
 
   struct buffer_t buffer;
@@ -240,23 +242,49 @@ int cmr_list_dir(struct cmr_t *cmr, const char *dir, struct list_t **content) {
   cmr_response_ignore(cmr);
 
   list_init(content);
-  
+
+  filelist_cache_free(&(cmr->filelist_cache.files));
+  strncpy(cmr->filelist_cache.basedir, dir, sizeof(cmr->filelist_cache.basedir));
+
   json_t *root, *status;
   json_error_t error;
   root = json_loads(buffer.data, 0, &error);
   status = json_object_get(root, "status");
   if (json_integer_value(status) == 200) {
-    json_t *body, *list, *item, *name, *kind;
+    json_t *body, *list, *item, *name, *kind, *size, *mtime, *home;
 
     body = json_object_get(root, "body");
     list = json_object_get(body, "list");
 
     size_t array_size = json_array_size(list);
     for(int i = 0; i < array_size; i++) {
+      filelist_cache_data_t data;
+
       item = json_array_get(list, i);
       name = json_object_get(item, "name");
       char *nm = strdup(json_string_value(name));
       list_append(content, nm);
+
+      home = json_object_get(item, "home");
+      strncpy(data.filename, json_string_value(home), sizeof(data.filename));
+
+      kind = json_object_get(item, "kind");
+      if (strcmp(json_string_value(kind), "folder") == 0)
+        data.kind = FK_FOLDER;
+      else
+        data.kind = FK_FILE;
+
+      size = json_object_get(item, "size");
+      data.filesize = json_integer_value(size);
+
+      if (data.kind == FK_FILE) {
+        mtime = json_object_get(item, "mtime");
+        data.mtime = json_integer_value(mtime);
+      } else
+        data.mtime = 0;
+
+      bool new_item;
+      htable_insert(&cmr->filelist_cache.files, (HTableNode*)&data, &new_item);
     }
   }
 
@@ -322,4 +350,5 @@ void cmr_finalize(struct cmr_t *cmr) {
   free(cmr->password);
   curl_easy_cleanup(cmr->curl);
   curl_global_cleanup();
+  filelist_cache_free(&(cmr->filelist_cache.files));
 }

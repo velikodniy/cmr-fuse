@@ -47,7 +47,7 @@ add_executable(cmr_fuse
         containers/lib/htable.c
         containers/lib/ilist.c
         containers/lib/rbtree.c
-        )
+        filelist_cache.h filelist_cache.c)
 
 target_link_libraries(cmr_fuse
         ${CURL_LIBRARIES}

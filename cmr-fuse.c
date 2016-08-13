@@ -1,32 +1,54 @@
 #include "cmrapi.h"
 #include "list.h"
+#include "filelist_cache.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <curl/curl.h>
 #include <jansson.h>
 
-struct cmr_t cmr;
-
 #define FUSE_USE_VERSION 30
 #include <fuse.h>
+#include <libgen.h>
+#include <errno.h>
 
- 
-static int cmr_getattr(const char *path, struct stat *stbuf)
-{
-  int res = 0;
+struct cmr_t cmr;
 
-  memset(stbuf, 0, sizeof(struct stat));
+static int cmr_getattr(const char *path, struct stat *stbuf) {
   if (strcmp(path, "/") == 0) {
     stbuf->st_mode = S_IFDIR | 0755;
     stbuf->st_nlink = 2;
-  } else {
-    stbuf->st_mode = S_IFREG | 0444;
+    return 0;
+  }
+
+  char *dir = dirname(strdup(path));
+
+  if (strcmp(dir, cmr.filelist_cache.basedir) != 0) {
+    struct list_t *lst;
+    cmr_list_dir(&cmr, dir, &lst); // TODO: Ignore list in cmr_list_dir() on lst=NULL
+  }
+
+  memset(stbuf, 0, sizeof(struct stat));
+  filelist_cache_data_t *data, query;
+
+  strncpy(query.filename, path, sizeof(query.filename));
+  data = (filelist_cache_data_t*)htable_find(&cmr.filelist_cache.files, &query);
+
+  if (data == NULL)
+    return -ENOENT;
+
+  if (data->kind == FK_FOLDER) {
+    stbuf->st_mode = S_IFDIR | 0755;
+    stbuf->st_nlink = 2;
+  }
+  else
+  {
+    stbuf->st_mode = S_IFREG | 0644;
     stbuf->st_nlink = 1;
-    stbuf->st_size = 0;
+    stbuf->st_size = data->filesize;
   } 
 
-  return res;
+  return 0;
 }
 
 static int cmr_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
@@ -104,8 +126,10 @@ int main(int argc, char **argv)
   }
   
   list_free(&lst);
-  //cmr_finalize(&cmr);
+  //
 
-  return fuse_main(argc, argv, &cmr_ops, NULL);
-  //return 0;
+  int ret = fuse_main(argc, argv, &cmr_ops, NULL);
+
+  cmr_finalize(&cmr);
+  return ret;
 }
