@@ -101,11 +101,6 @@ static struct fuse_operations cmr_ops = {
 
 int main(int argc, char **argv)
 {
-  /*  if (argc < 2) {
-    printf("Usage: %s login.json", argv[0]);
-    exit(1);
-    }*/
-
   json_t *root;
   json_error_t error;
   root = json_load_file("login.json", 0, &error);
@@ -113,33 +108,11 @@ int main(int argc, char **argv)
   const char *domain = json_string_value(json_object_get(root, "domain"));
   const char *password = json_string_value(json_object_get(root, "password"));
 
-
   cmr_init(&cmr, user, domain, password);
   cmr_login(&cmr);
   cmr_sdc_cookies(&cmr);
-
   cmr_get_token(&cmr);
-  printf("Token=%s\n", cmr.token);
-
   cmr_get_shard_urls(&cmr);
-  printf("DL=%s\n", cmr.download);
-  printf("UL=%s\n", cmr.upload);
-
-  char buf[5] = {0};
-  cmr_get_file(&cmr, "/test.txt", 4, 0, buf);
-  printf("%s\n", buf);
-
-  struct list_t *lst, *current;
-  cmr_list_dir(&cmr, "/", &lst);
-
-  current = lst;
-  while(current != NULL) {
-    printf("%s\n", (char*)(current->data));
-    current = current->next;
-  }
-  
-  list_free(&lst);
-  //
 
   int ret = fuse_main(argc, argv, &cmr_ops, NULL);
 
