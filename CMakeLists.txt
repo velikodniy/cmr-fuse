@@ -9,21 +9,10 @@ find_package(CURL)
 
 # FUSE
 
-if (APPLE)
-    SET(FUSE_NAMES libosxfuse.dylib fuse)
-else (APPLE)
-    SET(FUSE_NAMES fuse)
-endif (APPLE)
-
 FIND_LIBRARY(FUSE_LIBRARIES
-    NAMES ${FUSE_NAMES}
+    NAMES libosxfuse.dylib fuse
     PATHS /lib64 /lib /usr/lib64 /usr/lib /usr/local/lib64 /usr/local/lib
 )
-include ("FindPackageHandleStandardArgs")
-find_package_handle_standard_args ("FUSE" DEFAULT_MSG
-        FUSE_INCLUDE_DIR FUSE_LIBRARIES)
-
-mark_as_advanced (FUSE_INCLUDE_DIR FUSE_LIBRARIES)
 
 # JANSSON
 
@@ -36,7 +25,7 @@ include_directories(SYSTEM ${JANSSON_INCLUDE_DIR})
 
 add_definitions(-D_FILE_OFFSET_BITS=64)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall -Wextra")
 
 include_directories(containers/include)
 add_subdirectory(containers)
