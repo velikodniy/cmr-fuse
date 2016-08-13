@@ -47,11 +47,18 @@ static int cmr_getattr(const char *path, struct stat *stbuf) {
     stbuf->st_mode = S_IFREG | 0644;
     stbuf->st_nlink = 1;
     stbuf->st_size = data->filesize;
+#ifdef __APPLE__
     struct timespec ts = {.tv_sec=data->mtime, .tv_nsec=0};
     stbuf->st_mtimespec = ts;
     stbuf->st_ctimespec = ts;
     stbuf->st_atimespec = ts;
     stbuf->st_birthtimespec = ts;
+#else
+    time_t ts = data->mtime;
+    stbuf->st_mtime = ts;
+    stbuf->st_ctime = ts;
+    stbuf->st_atime = ts;
+#endif
   } 
 
   return 0;
