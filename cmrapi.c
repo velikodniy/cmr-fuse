@@ -28,6 +28,8 @@ void buffer_free(struct buffer_t *buffer) {
 
 size_t write_to_null(void *curl_buffer, size_t size, size_t nmemb, void *userptr)
 {
+  (void) curl_buffer;
+  (void) userptr;
   return size * nmemb;
 }
 
