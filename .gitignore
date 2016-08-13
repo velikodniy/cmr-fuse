@@ -44,4 +44,3 @@ CTestTestfile.cmake
 
 .gitignore
 .idea/
-CMakeLists.txt
