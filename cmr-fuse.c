@@ -52,12 +52,16 @@ static int cmr_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
   return 0;
 }
 
+int cmr_read(const char *filename, char *buffer, size_t size, off_t offset, struct fuse_file_info *file_info) {
+  (void) file_info;
 
+  return cmr_get_file(&cmr, filename, size, offset, buffer);
+}
 
 static struct fuse_operations cmr_ops = {
   .readdir= cmr_readdir,
   .getattr= cmr_getattr,
-  //  .read= cmr_read
+  .read= cmr_read,
 };
 
 int main(int argc, char **argv)
