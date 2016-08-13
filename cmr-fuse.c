@@ -40,12 +40,18 @@ static int cmr_getattr(const char *path, struct stat *stbuf) {
   if (data->kind == FK_FOLDER) {
     stbuf->st_mode = S_IFDIR | 0755;
     stbuf->st_nlink = 2;
+    stbuf->st_size = data->filesize;
   }
   else
   {
     stbuf->st_mode = S_IFREG | 0644;
     stbuf->st_nlink = 1;
     stbuf->st_size = data->filesize;
+    struct timespec ts = {.tv_sec=data->mtime, .tv_nsec=0};
+    stbuf->st_mtimespec = ts;
+    stbuf->st_ctimespec = ts;
+    stbuf->st_atimespec = ts;
+    stbuf->st_birthtimespec = ts;
   } 
 
   return 0;
