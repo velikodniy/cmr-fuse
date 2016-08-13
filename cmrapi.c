@@ -257,7 +257,7 @@ int cmr_list_dir(struct cmr_t *cmr, const char *dir, struct list_t **content) {
     list = json_object_get(body, "list");
 
     size_t array_size = json_array_size(list);
-    for(int i = 0; i < array_size; i++) {
+    for(size_t i = 0; i < array_size; i++) {
       filelist_cache_data_t data;
 
       item = json_array_get(list, i);
