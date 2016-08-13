@@ -39,17 +39,16 @@ add_definitions(-D_FILE_OFFSET_BITS=64)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra")
 
 include_directories(containers/include)
+add_subdirectory(containers)
 
 add_executable(cmr_fuse
         cmr-fuse.c
         cmrapi.c
         list.c
-        containers/lib/htable.c
-        containers/lib/ilist.c
-        containers/lib/rbtree.c
-        filelist_cache.h filelist_cache.c)
+        filelist_cache.c)
 
 target_link_libraries(cmr_fuse
+        CAlgorithms
         ${CURL_LIBRARIES}
         ${JANSSON_LIBRARY}
         ${FUSE_LIBRARIES}
