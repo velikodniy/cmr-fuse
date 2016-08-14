@@ -30,7 +30,12 @@ char* request_credentials(struct cmr_t *cmr){
   const char *request_string = "Login=%s&Domain=%s&Password=%s";
   size_t request_size = 1 + strlen(request_string)
                         + strlen(cmr->user) + strlen(cmr->domain) + strlen(cmr->password);
-  return malloc(request_size);
+
+  char *request = malloc(request_size);
+
+  snprintf(request, request_size, request_string, cmr->user, cmr->domain, cmr->password);
+
+  return request;
 }
 
 int cmr_init(struct cmr_t *cmr,
@@ -65,8 +70,6 @@ int cmr_login(struct cmr_t *cmr) {
   char *request = request_credentials(cmr);
 
   curl_request(cmr->curl, HTTP_POST, "https://auth.mail.ru/cgi-bin/auth", NULL, 0, request, NULL);
-
-  free(request);
   return 0;
 }
 
@@ -74,7 +77,7 @@ int cmr_sdc_cookies(struct cmr_t *cmr) {
 
   char *request = request_credentials(cmr);
 
-  return curl_request(cmr->curl, HTTP_GET, "https://auth.mail.ru/sdc?from=https://cloud.mail.ru/home", NULL, 0, request, NULL);
+  return curl_request(cmr->curl, HTTP_GET, "https://auth.mail.ru/sdc?from=https://cloud.mail.ru/home", NULL, 1, request, NULL);
 }
 
 int cmr_get_token(struct cmr_t *cmr) {
@@ -83,11 +86,9 @@ int cmr_get_token(struct cmr_t *cmr) {
   struct buffer_t buffer;
   buffer_init(&buffer);
 
-  char *request = request_credentials(cmr);
-
   headers = curl_slist_append(headers, "Accept: application/json");
 
-  curl_request(cmr->curl, HTTP_POST, "https://cloud.mail.ru/api/v2/tokens/csrf", headers, 0, request, &buffer);
+  curl_request(cmr->curl, HTTP_POST, "https://cloud.mail.ru/api/v2/tokens/csrf", headers, 0, "", &buffer);
 
   json_t *root, *status, *body, *token;
   json_error_t error;

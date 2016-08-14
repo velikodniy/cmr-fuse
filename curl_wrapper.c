@@ -5,7 +5,7 @@ CURL* curl_init(int verbose){
   CURL* curl;
   curl_global_init(CURL_GLOBAL_DEFAULT);
   if((curl = curl_easy_init()) == NULL){
-    fprintf(stderr, "cmr_init() failed\n");
+    fprintf(stderr, "curl_init() failed\n");
     return NULL;
   }
 
@@ -74,6 +74,10 @@ int curl_request(CURL *curl,
   else
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, NULL);
   res = curl_easy_perform(curl);
+
+  if(request != NULL && request != "")
+    free(request);
+
   if(res != CURLE_OK) {
     fprintf(stderr, "curl failed: %s\n", curl_easy_strerror(res));
     return 1;
