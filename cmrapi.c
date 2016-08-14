@@ -59,7 +59,7 @@ int cmr_init(struct cmr_t *cmr,
   strncpy(cmr->domain, domain, ldomain);
   strncpy(cmr->password, password, lpassword);
 
-  cmr->curl = curl_init(1);
+  cmr->curl = curl_init(0);
 
   filelist_cache_create(&(cmr->filelist_cache.files));
 
