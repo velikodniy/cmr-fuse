@@ -3,6 +3,7 @@
 #include "list.h"
 #include <curl/curl.h>
 #include "filelist_cache.h"
+#include "curl_wrapper.h"
 
 #define TOKEN_SIZE (256)
 #define URL_SIZE (256)
@@ -17,16 +18,6 @@ struct cmr_t {
   char upload[URL_SIZE];
   filelist_cache_t filelist_cache;
 };
-
-struct buffer_t {
-  char* data; 
-  size_t length;
-  size_t size;
-};
-
-void buffer_init(struct buffer_t *buffer);
-void buffer_reset(struct buffer_t *buffer);
-void buffer_free(struct buffer_t *buffer);
 
 int cmr_init(struct cmr_t *cmr, const char *user, const char *domain, const char *password);
 void cmr_response_ignore(struct cmr_t *cmr);

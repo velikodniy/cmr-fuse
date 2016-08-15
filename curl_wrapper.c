@@ -1,5 +1,26 @@
 #include <curl/curl.h>
+#include <stdlib.h>
+#include <string.h>
 #include "curl_wrapper.h"
+
+#define RESPONSE_BUFFER_SIZE (1024*1024)
+
+void buffer_init(struct buffer_t *buffer) {
+  buffer->data = malloc(RESPONSE_BUFFER_SIZE);
+  if (buffer->data == NULL) exit(1);
+  buffer->length = 0;
+  buffer->size = RESPONSE_BUFFER_SIZE;
+}
+
+void buffer_reset(struct buffer_t *buffer) {
+  buffer->length = 0;
+}
+
+void buffer_free(struct buffer_t *buffer) {
+  free(buffer->data);
+  buffer->data = NULL;
+  buffer->length = 0;
+}
 
 CURL* curl_init(int verbose){
   CURL* curl;

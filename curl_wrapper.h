@@ -1,6 +1,14 @@
 #pragma once
 
-#include "cmrapi.h"
+struct buffer_t {
+  char* data;
+  size_t length;
+  size_t size;
+};
+
+void buffer_init(struct buffer_t *buffer);
+void buffer_reset(struct buffer_t *buffer);
+void buffer_free(struct buffer_t *buffer);
 
 enum http_method{
   HTTP_GET,
