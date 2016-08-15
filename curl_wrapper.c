@@ -64,15 +64,16 @@ int curl_request(CURL *curl,
   }
 
   curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, follow_location);
-  if(method == HTTP_POST)
+  if(method == HTTP_POST) {
     curl_easy_setopt(curl, CURLOPT_POST, 1);
+    if(request != NULL)
+      curl_easy_setopt(curl, CURLOPT_POSTFIELDS, request);
+    else
+      curl_easy_setopt(curl, CURLOPT_POSTFIELDS, NULL);
+  }
   else
     curl_easy_setopt(curl, CURLOPT_POST, 0);
   curl_easy_setopt(curl, CURLOPT_URL, url);
-  if(request != NULL)
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, request);
-  else
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, NULL);
   res = curl_easy_perform(curl);
 
   if(request != NULL && request != NULL)
