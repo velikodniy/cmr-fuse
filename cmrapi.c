@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <curl/curl.h>
 #include <jansson.h>
 #include "list.h"
 #include "filelist_cache.h"
+#include "curl_wrapper.h"
 
 #define RESPONSE_BUFFER_SIZE (1024*1024)
 
@@ -26,43 +26,21 @@ void buffer_free(struct buffer_t *buffer) {
   buffer->length = 0;
 }
 
-size_t write_to_null(void *curl_buffer, size_t size, size_t nmemb, void *userptr)
-{
-  (void) curl_buffer;
-  (void) userptr;
-  return size * nmemb;
-}
+char* request_credentials(struct cmr_t *cmr){
+  const char *request_string = "Login=%s&Domain=%s&Password=%s";
+  size_t request_size = 1 + strlen(request_string)
+                        + strlen(cmr->user) + strlen(cmr->domain) + strlen(cmr->password);
 
-size_t write_to_buffer(void *curl_buffer, size_t size, size_t nmemb, void *userptr) {
-  struct buffer_t *buffer = userptr;
-  size_t real_size = size * nmemb;
+  char *request = malloc(request_size);
 
-  while (buffer->length + real_size >= buffer->size) {
-    size_t new_buffer_size = (size_t)(buffer->size * 1.618);
-    buffer->data = realloc(buffer->data, new_buffer_size);
-    if (buffer->data == NULL) exit(1);
-    buffer->size = new_buffer_size;
-  }
+  snprintf(request, request_size, request_string, cmr->user, cmr->domain, cmr->password);
 
-  memcpy(buffer->data + buffer->length, curl_buffer, real_size);
-  buffer->length += real_size;
-  buffer->data[buffer->length] = 0;
-  return real_size;
+  return request;
 }
 
 int cmr_init(struct cmr_t *cmr,
 	     const char *user, const char *domain, const char *password) {
   memset(cmr, 0, sizeof(struct cmr_t));
-  curl_global_init(CURL_GLOBAL_DEFAULT);
-  if((cmr->curl = curl_easy_init()) == NULL){
-    fprintf(stderr, "cmr_init() failed\n");
-    return 1;
-  }
-
-  curl_easy_setopt(cmr->curl, CURLOPT_USERAGENT, "PyMailCloud/(0.2)");
-  curl_easy_setopt(cmr->curl, CURLOPT_COOKIEFILE, "");
-  //  curl_easy_setopt(cmr->curl, CURLOPT_VERBOSE, 1);
-  cmr_response_ignore(cmr);
 
   size_t
     luser = 1 + strlen(user),
@@ -81,55 +59,25 @@ int cmr_init(struct cmr_t *cmr,
   strncpy(cmr->domain, domain, ldomain);
   strncpy(cmr->password, password, lpassword);
 
+  cmr->curl = curl_init(0);
+
   filelist_cache_create(&(cmr->filelist_cache.files));
 
   return 0;
 }
 
-void cmr_response_ignore(struct cmr_t *cmr) {
-  curl_easy_setopt(cmr->curl, CURLOPT_WRITEFUNCTION, write_to_null);
-}
-
-void cmr_response_to_buffer(struct cmr_t *cmr, struct buffer_t *buffer) {
-  curl_easy_setopt(cmr->curl, CURLOPT_WRITEFUNCTION, write_to_buffer);
-  curl_easy_setopt(cmr->curl, CURLOPT_WRITEDATA, buffer);
-}
-
 int cmr_login(struct cmr_t *cmr) {
-  CURLcode res;
-  const char *request_string = "Login=%s&Domain=%s&Password=%s";
-  size_t request_size = 1 + strlen(request_string)
-    + strlen(cmr->user) + strlen(cmr->domain) + strlen(cmr->password);
-  char *request = malloc(request_size);
-  
-  snprintf(request, request_size, request_string, cmr->user, cmr->domain, cmr->password);
+  char *request = request_credentials(cmr);
 
-  curl_easy_setopt(cmr->curl, CURLOPT_FOLLOWLOCATION, 0);
-  curl_easy_setopt(cmr->curl, CURLOPT_POST, 1);
-  curl_easy_setopt(cmr->curl, CURLOPT_URL, "https://auth.mail.ru/cgi-bin/auth");
-  curl_easy_setopt(cmr->curl, CURLOPT_POSTFIELDS, request);
-  res = curl_easy_perform(cmr->curl);
-  if(res != CURLE_OK) {
-    fprintf(stderr, "cmr_login() failed: %s\n", curl_easy_strerror(res));
-    return 1;
-  }
-  curl_easy_setopt(cmr->curl, CURLOPT_POST, 0);
-  curl_easy_setopt(cmr->curl, CURLOPT_FOLLOWLOCATION, 1);
-
-  free(request);
+  curl_request(cmr->curl, HTTP_POST, "https://auth.mail.ru/cgi-bin/auth", NULL, 0, request, NULL);
   return 0;
 }
 
 int cmr_sdc_cookies(struct cmr_t *cmr) {
-  CURLcode res;
 
-  curl_easy_setopt(cmr->curl, CURLOPT_URL, "https://auth.mail.ru/sdc?from=https://cloud.mail.ru/home");
-  res = curl_easy_perform(cmr->curl);
-  if(res != CURLE_OK) {
-    fprintf(stderr, "cmr_sdc_cookies() failed: %s\n", curl_easy_strerror(res));
-    return 1;
-  }
-  return 0;
+  char *request = request_credentials(cmr);
+
+  return curl_request(cmr->curl, HTTP_GET, "https://auth.mail.ru/sdc?from=https://cloud.mail.ru/home", NULL, 1, request, NULL);
 }
 
 int cmr_get_token(struct cmr_t *cmr) {
@@ -139,19 +87,8 @@ int cmr_get_token(struct cmr_t *cmr) {
   buffer_init(&buffer);
 
   headers = curl_slist_append(headers, "Accept: application/json");
-  curl_easy_setopt(cmr->curl, CURLOPT_HTTPHEADER, headers);
 
-  cmr_response_to_buffer(cmr, &buffer);
-  curl_easy_setopt(cmr->curl, CURLOPT_POST, 1);
-  curl_easy_setopt(cmr->curl, CURLOPT_URL, "https://cloud.mail.ru/api/v2/tokens/csrf");
-  res = curl_easy_perform(cmr->curl);
-  if(res != CURLE_OK) {
-    fprintf(stderr, "cmr_get_token() failed: %s\n", curl_easy_strerror(res));
-    return 1;
-  }
-  curl_easy_setopt(cmr->curl, CURLOPT_POST, 0); 
-  curl_easy_setopt(cmr->curl, CURLOPT_HTTPHEADER, NULL);
-  cmr_response_ignore(cmr);
+  curl_request(cmr->curl, HTTP_POST, "https://cloud.mail.ru/api/v2/tokens/csrf", headers, 0, "", &buffer);
 
   json_t *root, *status, *body, *token;
   json_error_t error;
@@ -186,15 +123,9 @@ int cmr_get_shard_urls(struct cmr_t *cmr) {
   
   snprintf(url, url_size, url_string, cmr->token);
 
-  cmr_response_to_buffer(cmr, &buffer);
-  curl_easy_setopt(cmr->curl, CURLOPT_URL, url);
+  char *request = request_credentials(cmr);
 
-  res = curl_easy_perform(cmr->curl);
-  if(res != CURLE_OK) {
-    fprintf(stderr, "cmr_get_shard_urls() failed: %s\n", curl_easy_strerror(res));
-    return 1;
-  }
-  cmr_response_ignore(cmr);
+  curl_request(cmr->curl, HTTP_POST, url, NULL, 1, request, &buffer);
 
   json_t *root, *status;
   json_error_t error;
@@ -233,15 +164,10 @@ int cmr_list_dir(struct cmr_t *cmr, const char *dir, struct list_t **content) {
   size_t du_size = snprintf(NULL, 0, "https://cloud.mail.ru/api/v2/folder?token=%s&home=%s", cmr->token, encoded_dir);
   char *dir_url = malloc(1 + du_size);
   snprintf(dir_url, du_size+1, "https://cloud.mail.ru/api/v2/folder?token=%s&home=%s", cmr->token, encoded_dir);
-  
-  cmr_response_to_buffer(cmr, &buffer);
-  curl_easy_setopt(cmr->curl, CURLOPT_URL, dir_url);
-  res = curl_easy_perform(cmr->curl);
-  if(res != CURLE_OK) {
-    fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-    return 1;
-  }
-  cmr_response_ignore(cmr);
+
+  char *request = request_credentials(cmr);
+
+  curl_request(cmr->curl, HTTP_GET, dir_url, NULL, 1, request, &buffer);
 
   list_init(content);
 
@@ -297,7 +223,6 @@ int cmr_list_dir(struct cmr_t *cmr, const char *dir, struct list_t **content) {
   return 0;
 }
 
-
 size_t cmr_get_file(struct cmr_t *cmr, const char *filename, size_t size, off_t offset, char *buf) {
   CURLcode res;
 
@@ -322,17 +247,11 @@ size_t cmr_get_file(struct cmr_t *cmr, const char *filename, size_t size, off_t 
 
   struct curl_slist *headers = NULL;
   headers = curl_slist_append(headers, range_header);
-  curl_easy_setopt(cmr->curl, CURLOPT_HTTPHEADER, headers);
+  char *request = request_credentials(cmr);
 
-  cmr_response_to_buffer(cmr, &buffer);
-  curl_easy_setopt(cmr->curl, CURLOPT_URL, download_url);
-  res = curl_easy_perform(cmr->curl);
-  if(res != CURLE_OK) {
-    fprintf(stderr, "cmr_get_file() failed: %s\n", curl_easy_strerror(res));
-    return 0;
-  }
-  curl_easy_setopt(cmr->curl, CURLOPT_HTTPHEADER, NULL);
-  cmr_response_ignore(cmr);
+  curl_request(cmr->curl, HTTP_GET, download_url, headers, 1, request, &buffer);
+
+  curl_easy_setopt(cmr->curl, CURLOPT_HTTPHEADER, headers);
 
   memcpy(buf, buffer.data, buffer.length);
 
