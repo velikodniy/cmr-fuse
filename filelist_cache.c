@@ -38,6 +38,11 @@ void filelist_cache_create(HTable *hTable) {
 		NULL);
 }
 
+void filelist_cache_insert(HTable *hTable, filelist_cache_data_t *data) {
+  bool new_item;
+  htable_insert(hTable, (HTableNode*)data, &new_item);
+}
+
 void filelist_cache_free(HTable *hTable) {
   htable_free_items(hTable);
   filelist_cache_create(hTable);

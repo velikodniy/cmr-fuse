@@ -25,5 +25,5 @@ typedef struct {
 } filelist_cache_data_t;
 
 void filelist_cache_create(HTable *hTable);
+void filelist_cache_insert(HTable *hTable, filelist_cache_data_t *data);
 void filelist_cache_free(HTable *hTable);
-

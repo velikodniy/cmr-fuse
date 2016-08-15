@@ -179,8 +179,7 @@ int cmr_list_dir(struct cmr_t *cmr, const char *dir, struct list_t **content) {
       } else
         data.mtime = 0;
 
-      bool new_item;
-      htable_insert(&cmr->filelist_cache.files, (HTableNode*)&data, &new_item);
+      filelist_cache_insert(&cmr->filelist_cache.files, &data);
     }
   }
 
