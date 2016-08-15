@@ -12,10 +12,6 @@ void buffer_init(struct buffer_t *buffer) {
   buffer->size = RESPONSE_BUFFER_SIZE;
 }
 
-void buffer_reset(struct buffer_t *buffer) {
-  buffer->length = 0;
-}
-
 void buffer_free(struct buffer_t *buffer) {
   free(buffer->data);
   buffer->data = NULL;

@@ -7,7 +7,6 @@ struct buffer_t {
 };
 
 void buffer_init(struct buffer_t *buffer);
-void buffer_reset(struct buffer_t *buffer);
 void buffer_free(struct buffer_t *buffer);
 
 enum http_method{
