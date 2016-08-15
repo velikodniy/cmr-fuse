@@ -74,10 +74,7 @@ int cmr_login(struct cmr_t *cmr) {
 }
 
 int cmr_sdc_cookies(struct cmr_t *cmr) {
-
-  char *request = request_credentials(cmr);
-
-  return curl_request(cmr->curl, HTTP_GET, "https://auth.mail.ru/sdc?from=https://cloud.mail.ru/home", NULL, 1, request, NULL);
+  return curl_request(cmr->curl, HTTP_GET, "https://auth.mail.ru/sdc?from=https://cloud.mail.ru/home", NULL, 1, NULL, NULL);
 }
 
 int cmr_get_token(struct cmr_t *cmr) {
@@ -87,7 +84,7 @@ int cmr_get_token(struct cmr_t *cmr) {
 
   headers = curl_slist_append(headers, "Accept: application/json");
 
-  curl_request(cmr->curl, HTTP_POST, "https://cloud.mail.ru/api/v2/tokens/csrf", headers, 0, NULL, &buffer);
+  curl_request(cmr->curl, HTTP_GET, "https://cloud.mail.ru/api/v2/tokens/csrf", headers, 0, NULL, &buffer);
 
   json_t *root, *status, *body, *token;
   json_error_t error;
@@ -119,9 +116,7 @@ int cmr_get_shard_urls(struct cmr_t *cmr) {
   
   snprintf(url, url_size, url_string, cmr->token);
 
-  char *request = request_credentials(cmr);
-
-  curl_request(cmr->curl, HTTP_POST, url, NULL, 1, request, &buffer);
+  curl_request(cmr->curl, HTTP_GET, url, NULL, 1, NULL, &buffer);
 
   json_t *root, *status;
   json_error_t error;
@@ -159,9 +154,7 @@ int cmr_list_dir(struct cmr_t *cmr, const char *dir, struct list_t **content) {
   char *dir_url = malloc(1 + du_size);
   snprintf(dir_url, du_size+1, "https://cloud.mail.ru/api/v2/folder?token=%s&home=%s", cmr->token, encoded_dir);
 
-  char *request = request_credentials(cmr);
-
-  curl_request(cmr->curl, HTTP_GET, dir_url, NULL, 1, request, &buffer);
+  curl_request(cmr->curl, HTTP_GET, dir_url, NULL, 1, NULL, &buffer);
 
   list_init(content);
 
@@ -239,9 +232,8 @@ size_t cmr_get_file(struct cmr_t *cmr, const char *filename, size_t size, off_t 
 
   struct curl_slist *headers = NULL;
   headers = curl_slist_append(headers, range_header);
-  char *request = request_credentials(cmr);
 
-  curl_request(cmr->curl, HTTP_GET, download_url, headers, 1, request, &buffer);
+  curl_request(cmr->curl, HTTP_GET, download_url, headers, 1, NULL, &buffer);
 
   curl_easy_setopt(cmr->curl, CURLOPT_HTTPHEADER, headers);
 
