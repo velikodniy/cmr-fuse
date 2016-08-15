@@ -75,7 +75,7 @@ int curl_request(CURL *curl,
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, NULL);
   res = curl_easy_perform(curl);
 
-  if(request != NULL && request != "")
+  if(request != NULL && request != NULL)
     free(request);
 
   if(res != CURLE_OK) {

@@ -88,7 +88,7 @@ int cmr_get_token(struct cmr_t *cmr) {
 
   headers = curl_slist_append(headers, "Accept: application/json");
 
-  curl_request(cmr->curl, HTTP_POST, "https://cloud.mail.ru/api/v2/tokens/csrf", headers, 0, "", &buffer);
+  curl_request(cmr->curl, HTTP_POST, "https://cloud.mail.ru/api/v2/tokens/csrf", headers, 0, NULL, &buffer);
 
   json_t *root, *status, *body, *token;
   json_error_t error;
