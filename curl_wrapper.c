@@ -62,7 +62,7 @@ int curl_request(CURL *curl,
   }else{
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_to_null);
   }
-  if(follow_location == NULL) follow_location = 0;
+
   curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, follow_location);
   if(method == HTTP_POST)
     curl_easy_setopt(curl, CURLOPT_POST, 1);
