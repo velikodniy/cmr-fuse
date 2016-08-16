@@ -29,10 +29,9 @@ static int cmr_getattr(const char *path, struct stat *stbuf) {
   }
 
   memset(stbuf, 0, sizeof(struct stat));
-  filelist_cache_data_t *data, query;
 
-  strncpy(query.filename, path, sizeof(query.filename));
-  data = (filelist_cache_data_t*)htable_find(&cmr.filelist_cache.files, (HTableNode*)&query);
+  filelist_cache_data_t *data;
+  data = filelist_cache_find(&cmr.filelist_cache.files, path);
 
   if (data == NULL)
     return -ENOENT;
