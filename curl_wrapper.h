@@ -1,13 +1,13 @@
 #pragma once
 
-struct buffer_t {
+typedef struct buffer_t {
   char* data;
   size_t length;
   size_t size;
-};
+} buffer_t;
 
-void buffer_init(struct buffer_t *buffer);
-void buffer_free(struct buffer_t *buffer);
+void buffer_init(buffer_t *buffer);
+void buffer_free(buffer_t *buffer);
 
 enum http_method{
   HTTP_GET,
@@ -38,4 +38,4 @@ int curl_request(CURL *curl,
                  struct curl_slist *headers,
                  int follow_location,
                  char *request,
-                 struct buffer_t *buffer);
+                 buffer_t *buffer);

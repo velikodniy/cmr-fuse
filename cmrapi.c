@@ -60,7 +60,7 @@ int cmr_sdc_cookies(struct cmr_t *cmr) {
 
 int cmr_get_token(struct cmr_t *cmr) {
   struct curl_slist *headers = NULL;
-  struct buffer_t buffer;
+  buffer_t buffer;
   buffer_init(&buffer);
 
   headers = curl_slist_append(headers, "Accept: application/json");
@@ -88,7 +88,7 @@ int cmr_get_token(struct cmr_t *cmr) {
 }
 
 int cmr_get_shard_urls(struct cmr_t *cmr) {
-  struct buffer_t buffer;
+  buffer_t buffer;
   buffer_init(&buffer);
   
   const char *url_string = "https://cloud.mail.ru/api/v2/dispatcher?token=%s";
@@ -126,7 +126,7 @@ int cmr_get_shard_urls(struct cmr_t *cmr) {
 }
 
 int cmr_list_dir(struct cmr_t *cmr, const char *dir, struct list_t **content) {
-  struct buffer_t buffer;
+  buffer_t buffer;
   buffer_init(&buffer);
 
   char *encoded_dir = curl_easy_escape(cmr->curl, dir, 0);
@@ -194,7 +194,7 @@ size_t cmr_get_file(struct cmr_t *cmr, const char *filename, size_t size, off_t 
   if (*filename == '/')
     filename++;
   
-  struct buffer_t buffer;
+  buffer_t buffer;
   buffer_init(&buffer);
 
   char *encoded_filename;
