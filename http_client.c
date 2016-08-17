@@ -33,7 +33,7 @@ http_client_t *http_init(int verbose){
   if(verbose == 1)
     curl_easy_setopt(hc->curl, CURLOPT_VERBOSE, 1);
 
-  return hc->curl;
+  return hc;
 }
 
 size_t write_to_null(void *curl_buffer, size_t size, size_t nmemb, void *userptr)
