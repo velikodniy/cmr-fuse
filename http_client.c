@@ -135,8 +135,9 @@ int http_request(http_client_t *hc,
 }
 
 void http_free(http_client_t *hc) {
-  curl_share_cleanup(hc->curl_share);
-  curl_global_cleanup();
+  // FIXME: Crashes with core dump (double free on umount). Does libfuse set exit handler?
+  //curl_share_cleanup(hc->curl_share);
+  //curl_global_cleanup();
   pthread_mutex_destroy(hc->curl_mutex);
   free(hc);
 }
