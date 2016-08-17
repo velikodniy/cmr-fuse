@@ -40,7 +40,7 @@ int cmr_init(struct cmr_t *cmr,
   strncpy(cmr->domain, domain, ldomain);
   strncpy(cmr->password, password, lpassword);
 
-  cmr->curl = curl_init(0);
+  cmr->http = http_init(0);
 
   filelist_cache_create(&(cmr->filelist_cache.files));
 
@@ -50,12 +50,12 @@ int cmr_init(struct cmr_t *cmr,
 int cmr_login(struct cmr_t *cmr) {
   char *request = request_credentials(cmr);
 
-  curl_request(cmr->curl, HTTP_POST, "https://auth.mail.ru/cgi-bin/auth", NULL, 0, request, NULL);
+  http_request(cmr->http, HTTP_POST, "https://auth.mail.ru/cgi-bin/auth", NULL, 0, request, NULL);
   return 0;
 }
 
 int cmr_sdc_cookies(struct cmr_t *cmr) {
-  return curl_request(cmr->curl, HTTP_GET, "https://auth.mail.ru/sdc?from=https://cloud.mail.ru/home", NULL, 1, NULL, NULL);
+  return http_request(cmr->http, HTTP_GET, "https://auth.mail.ru/sdc?from=https://cloud.mail.ru/home", NULL, 1, NULL, NULL);
 }
 
 int cmr_get_token(struct cmr_t *cmr) {
@@ -65,7 +65,7 @@ int cmr_get_token(struct cmr_t *cmr) {
 
   headers = curl_slist_append(headers, "Accept: application/json");
 
-  curl_request(cmr->curl, HTTP_GET, "https://cloud.mail.ru/api/v2/tokens/csrf", headers, 0, NULL, &buffer);
+  http_request(cmr->http, HTTP_GET, "https://cloud.mail.ru/api/v2/tokens/csrf", headers, 0, NULL, &buffer);
 
   json_t *root, *status, *body, *token;
   json_error_t error;
@@ -97,7 +97,7 @@ int cmr_get_shard_urls(struct cmr_t *cmr) {
   
   snprintf(url, url_size, url_string, cmr->token);
 
-  curl_request(cmr->curl, HTTP_GET, url, NULL, 1, NULL, &buffer);
+  http_request(cmr->http, HTTP_GET, url, NULL, 1, NULL, &buffer);
 
   json_t *root, *status;
   json_error_t error;
@@ -129,13 +129,13 @@ int cmr_list_dir(struct cmr_t *cmr, const char *dir, struct list_t **content) {
   buffer_t buffer;
   buffer_init(&buffer);
 
-  char *encoded_dir = curl_easy_escape(cmr->curl, dir, 0);
+  char *encoded_dir = curl_easy_escape(cmr->http, dir, 0);
   
   size_t du_size = snprintf(NULL, 0, "https://cloud.mail.ru/api/v2/folder?token=%s&home=%s", cmr->token, encoded_dir);
   char *dir_url = malloc(1 + du_size);
   snprintf(dir_url, du_size+1, "https://cloud.mail.ru/api/v2/folder?token=%s&home=%s", cmr->token, encoded_dir);
 
-  curl_request(cmr->curl, HTTP_GET, dir_url, NULL, 1, NULL, &buffer);
+  http_request(cmr->http, HTTP_GET, dir_url, NULL, 1, NULL, &buffer);
 
   list_init(content);
 
@@ -200,7 +200,7 @@ size_t cmr_get_file(struct cmr_t *cmr, const char *filename, size_t size, off_t 
   char *encoded_filename;
   char *download_url, *range_header;
   
-  encoded_filename = curl_easy_escape(cmr->curl, filename, 0);
+  encoded_filename = curl_easy_escape(cmr->http, filename, 0);
 
   size_t du_size = snprintf(NULL, 0, "%s%s", cmr->download, encoded_filename);
   download_url = malloc(1 + du_size);
@@ -213,9 +213,9 @@ size_t cmr_get_file(struct cmr_t *cmr, const char *filename, size_t size, off_t 
   struct curl_slist *headers = NULL;
   headers = curl_slist_append(headers, range_header);
 
-  curl_request(cmr->curl, HTTP_GET, download_url, headers, 1, NULL, &buffer);
+  http_request(cmr->http, HTTP_GET, download_url, headers, 1, NULL, &buffer);
 
-  curl_easy_setopt(cmr->curl, CURLOPT_HTTPHEADER, headers);
+  curl_easy_setopt(cmr->http, CURLOPT_HTTPHEADER, headers);
 
   memcpy(buf, buffer.data, buffer.length);
 
@@ -233,7 +233,6 @@ void cmr_finalize(struct cmr_t *cmr) {
   free(cmr->user);
   free(cmr->domain);
   free(cmr->password);
-  curl_easy_cleanup(cmr->curl);
-  curl_global_cleanup();
+  http_free(cmr->http);
   filelist_cache_free(&(cmr->filelist_cache.files));
 }

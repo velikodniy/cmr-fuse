@@ -18,21 +18,22 @@ void buffer_free(struct buffer_t *buffer) {
   buffer->length = 0;
 }
 
-CURL* curl_init(int verbose){
-  CURL* curl;
+http_client_t *http_init(int verbose){
+  http_client_t *hc = malloc(sizeof(http_client_t));
   curl_global_init(CURL_GLOBAL_DEFAULT);
-  if((curl = curl_easy_init()) == NULL){
+  if((hc->curl = curl_easy_init()) == NULL){
     fprintf(stderr, "curl_init() failed\n");
+    free(hc);
     return NULL;
   }
 
-  curl_easy_setopt(curl, CURLOPT_USERAGENT, "PyMailCloud/(0.2)");
-  curl_easy_setopt(curl, CURLOPT_COOKIEFILE, "");
+  curl_easy_setopt(hc->curl, CURLOPT_USERAGENT, "PyMailCloud/(0.2)");
+  curl_easy_setopt(hc->curl, CURLOPT_COOKIEFILE, "");
 
   if(verbose == 1)
-    curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+    curl_easy_setopt(hc->curl, CURLOPT_VERBOSE, 1);
 
-  return curl;
+  return hc->curl;
 }
 
 size_t write_to_null(void *curl_buffer, size_t size, size_t nmemb, void *userptr)
@@ -59,13 +60,14 @@ size_t write_to_buffer(void *curl_buffer, size_t size, size_t nmemb, void *userp
   return real_size;
 }
 
-int curl_request(CURL *curl,
+int http_request(http_client_t *hc,
                  enum http_method method,
                  char *url,
                  struct curl_slist *headers,
                  int follow_location,
                  char *request,
                  struct buffer_t *buffer){
+  CURL *curl = hc->curl;
   CURLcode res;
 
   if(headers != NULL)
@@ -102,4 +104,10 @@ int curl_request(CURL *curl,
   }
 
   return 0;
+}
+
+void http_free(http_client_t *hc) {
+  curl_easy_cleanup(hc->curl);
+  curl_global_cleanup();
+  free(hc);
 }

@@ -1,5 +1,9 @@
 #pragma once
 
+typedef struct http_client_t {
+  CURL *curl;
+} http_client_t;
+
 typedef struct buffer_t {
   char* data;
   size_t length;
@@ -17,25 +21,32 @@ enum http_method{
 /**
  * Initialize CURL
  * @param verbose 1 - verbose, 0 - silent mode
- * @return
+ * @return HTTP client handler
  */
-CURL* curl_init(int verbose);
+http_client_t *http_init(int verbose);
 
 /**
  * Make HTTP POST request
- * @param curl CURL object
+ * @param hc HTTP client handler
  * @param method HTTP method
  * @param url URL for POST request
  * @param headers HTTP headers
  * @param follow_location 1 - redirect on Location header
  * @param request POST request body
  * @param buffer request result
- * @return
+ * @return 0 on success
  */
-int curl_request(CURL *curl,
+int http_request(http_client_t *hc,
                  enum http_method method,
                  char *url,
                  struct curl_slist *headers,
                  int follow_location,
                  char *request,
                  buffer_t *buffer);
+
+/**
+ * Frees HTTP client object
+ * @brief http_free
+ * @param hc HTTP client handler
+ */
+void http_free(http_client_t *hc);

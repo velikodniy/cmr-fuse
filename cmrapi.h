@@ -12,7 +12,7 @@ struct cmr_t {
   char *user;
   char *domain;
   char *password;
-  CURL *curl;
+  http_client_t *http;
   char token[TOKEN_SIZE];
   char download[URL_SIZE];
   char upload[URL_SIZE];
