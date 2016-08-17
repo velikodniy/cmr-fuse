@@ -1,6 +1,7 @@
 #include <curl/curl.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 #include "http_client.h"
 
 #define RESPONSE_BUFFER_SIZE (1024*1024)
@@ -18,21 +19,39 @@ void buffer_free(struct buffer_t *buffer) {
   buffer->length = 0;
 }
 
-http_client_t *http_init(int verbose){
+void curl_lock(CURL *curl, curl_lock_data data, curl_lock_access access, void *userptr) {
+  (void)curl;
+  (void)data;
+  (void)access;
+  //TODO: use separate locks for different kinds of data
+  pthread_mutex_lock((pthread_mutex_t*)userptr);
+}
+
+void curl_unlock(CURL *curl, curl_lock_data data, void *userptr) {
+  (void)curl;
+  (void)data;
+  pthread_mutex_unlock((pthread_mutex_t*)userptr);
+}
+
+http_client_t *http_init(){
   http_client_t *hc = malloc(sizeof(http_client_t));
   curl_global_init(CURL_GLOBAL_DEFAULT);
-  if((hc->curl = curl_easy_init()) == NULL){
-    fprintf(stderr, "curl_init() failed\n");
+  if((hc->curl_share = curl_share_init()) == NULL){
+    fprintf(stderr, "curl_share_init() failed\n");
     free(hc);
     return NULL;
   }
 
-  curl_easy_setopt(hc->curl, CURLOPT_USERAGENT, "PyMailCloud/(0.2)");
-  curl_easy_setopt(hc->curl, CURLOPT_COOKIEFILE, "");
+  curl_share_setopt(hc->curl_share, CURLSHOPT_SHARE, CURL_LOCK_DATA_COOKIE);
+  curl_share_setopt(hc->curl_share, CURLSHOPT_SHARE, CURL_LOCK_DATA_DNS);
+  curl_share_setopt(hc->curl_share, CURLSHOPT_SHARE, CURL_LOCK_DATA_SSL_SESSION);
+  curl_share_setopt(hc->curl_share, CURLSHOPT_USERDATA, hc->curl_mutex);
+  curl_share_setopt(hc->curl_share, CURLSHOPT_LOCKFUNC, curl_lock);
+  curl_share_setopt(hc->curl_share, CURLSHOPT_UNLOCKFUNC, curl_unlock);
 
-  if(verbose == 1)
-    curl_easy_setopt(hc->curl, CURLOPT_VERBOSE, 1);
+  pthread_mutex_init(hc->curl_mutex, NULL);
 
+  hc->verbose = 0;
   return hc;
 }
 
@@ -67,8 +86,15 @@ int http_request(http_client_t *hc,
                  int follow_location,
                  char *request,
                  struct buffer_t *buffer){
-  CURL *curl = hc->curl;
+  CURL *curl = curl_easy_init();
   CURLcode res;
+
+  curl_easy_setopt(curl, CURLOPT_SHARE, hc->curl_share);
+  curl_easy_setopt(curl, CURLOPT_USERAGENT, "PyMailCloud/(0.2)");
+  curl_easy_setopt(curl, CURLOPT_COOKIEFILE, "");
+
+  if(hc->verbose == 1)
+    curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
 
   if(headers != NULL)
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
@@ -95,19 +121,22 @@ int http_request(http_client_t *hc,
   curl_easy_setopt(curl, CURLOPT_URL, url);
   res = curl_easy_perform(curl);
 
-  if(request != NULL && request != NULL)
+  if(request != NULL)
     free(request);
 
   if(res != CURLE_OK) {
     fprintf(stderr, "curl failed: %s\n", curl_easy_strerror(res));
+    curl_easy_cleanup(curl);
     return 1;
   }
 
+  curl_easy_cleanup(curl);
   return 0;
 }
 
 void http_free(http_client_t *hc) {
-  curl_easy_cleanup(hc->curl);
+  curl_share_cleanup(hc->curl_share);
   curl_global_cleanup();
+  pthread_mutex_destroy(hc->curl_mutex);
   free(hc);
 }

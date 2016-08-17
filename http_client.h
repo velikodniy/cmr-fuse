@@ -1,7 +1,12 @@
 #pragma once
 
+#include <curl/curl.h>
+#include <pthread.h>
+
 typedef struct http_client_t {
-  CURL *curl;
+  CURLSH *curl_share;
+  pthread_mutex_t *curl_mutex;
+  int verbose;
 } http_client_t;
 
 typedef struct buffer_t {
@@ -23,7 +28,7 @@ enum http_method{
  * @param verbose 1 - verbose, 0 - silent mode
  * @return HTTP client handler
  */
-http_client_t *http_init(int verbose);
+http_client_t *http_init();
 
 /**
  * Make HTTP POST request
