@@ -5,7 +5,7 @@
 #include <jansson.h>
 #include "list.h"
 #include "filelist_cache.h"
-#include "curl_wrapper.h"
+#include "http_client.h"
 
 char* request_credentials(struct cmr_t *cmr){
   const char *request_string = "Login=%s&Domain=%s&Password=%s";

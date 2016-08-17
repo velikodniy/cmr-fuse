@@ -35,7 +35,7 @@ add_executable(cmr_fuse
         cmrapi.c
         list.c
         filelist_cache.c
-        curl_wrapper.c)
+        http_client.c)
 
 target_link_libraries(cmr_fuse
         CAlgorithms

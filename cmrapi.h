@@ -3,7 +3,7 @@
 #include "list.h"
 #include <curl/curl.h>
 #include "filelist_cache.h"
-#include "curl_wrapper.h"
+#include "http_client.h"
 
 #define TOKEN_SIZE (256)
 #define URL_SIZE (256)

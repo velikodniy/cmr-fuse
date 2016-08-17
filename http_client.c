@@ -1,7 +1,7 @@
 #include <curl/curl.h>
 #include <stdlib.h>
 #include <string.h>
-#include "curl_wrapper.h"
+#include "http_client.h"
 
 #define RESPONSE_BUFFER_SIZE (1024*1024)
 
