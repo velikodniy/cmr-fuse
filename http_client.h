@@ -45,7 +45,7 @@ int http_request(http_client_t *hc,
                  buffer_t *buffer);
 
 /**
- * Frees HTTP client object
+ * Free HTTP client object
  * @brief http_free
  * @param hc HTTP client handler
  */
