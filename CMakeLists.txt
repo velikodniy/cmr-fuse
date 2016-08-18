@@ -3,6 +3,10 @@ project(cmr_fuse)
 
 # ------ LIBRARIES ------
 
+# pthreads
+
+find_package(Threads REQUIRED)
+
 # CURL
 
 find_package(CURL)
@@ -25,7 +29,7 @@ include_directories(SYSTEM ${JANSSON_INCLUDE_DIR})
 
 add_definitions(-D_FILE_OFFSET_BITS=64)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11 -pedantic -Wall -Wextra -pthread")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11 -pedantic -Wall -Wextra")
 
 include_directories(containers/include)
 add_subdirectory(containers)
@@ -38,6 +42,7 @@ add_executable(cmr_fuse
         http_client.c)
 
 target_link_libraries(cmr_fuse
+        ${CMAKE_THREAD_LIBS_INIT}
         CAlgorithms
         ${CURL_LIBRARIES}
         ${JANSSON_LIBRARY}
