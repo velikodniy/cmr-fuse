@@ -42,14 +42,17 @@ http_client_t *http_init(){
     return NULL;
   }
 
+  hc->curl_mutex = malloc(sizeof(pthread_mutex_t));
+
+  if (0 != pthread_mutex_init(hc->curl_mutex, NULL))
+    return NULL;
+
   curl_share_setopt(hc->curl_share, CURLSHOPT_SHARE, CURL_LOCK_DATA_COOKIE);
   curl_share_setopt(hc->curl_share, CURLSHOPT_SHARE, CURL_LOCK_DATA_DNS);
   curl_share_setopt(hc->curl_share, CURLSHOPT_SHARE, CURL_LOCK_DATA_SSL_SESSION);
   curl_share_setopt(hc->curl_share, CURLSHOPT_USERDATA, hc->curl_mutex);
   curl_share_setopt(hc->curl_share, CURLSHOPT_LOCKFUNC, curl_lock);
   curl_share_setopt(hc->curl_share, CURLSHOPT_UNLOCKFUNC, curl_unlock);
-
-  pthread_mutex_init(hc->curl_mutex, NULL);
 
   hc->verbose = 0;
   return hc;
@@ -138,6 +141,6 @@ void http_free(http_client_t *hc) {
   // FIXME: Crashes with core dump (double free on umount). Does libfuse set exit handler?
   //curl_share_cleanup(hc->curl_share);
   //curl_global_cleanup();
-  pthread_mutex_destroy(hc->curl_mutex);
+  pthread_mutex_destroy(&hc->curl_mutex);
   free(hc);
 }
