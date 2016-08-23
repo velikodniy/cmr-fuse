@@ -124,9 +124,6 @@ int http_request(http_client_t *hc,
   curl_easy_setopt(curl, CURLOPT_URL, url);
   res = curl_easy_perform(curl);
 
-  if(request != NULL)
-    free(request);
-
   if(res != CURLE_OK) {
     fprintf(stderr, "curl failed: %s\n", curl_easy_strerror(res));
     curl_easy_cleanup(curl);
