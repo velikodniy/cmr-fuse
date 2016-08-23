@@ -13,7 +13,7 @@ int cmr_init(struct cmr_t *cmr, const char *user, const char *domain, const char
   cmr->user = strdup(user);
   cmr->domain = strdup(domain);
   cmr->password = strdup(password);
-  cmr->http = http_init(0);
+  cmr->http = http_init();
 
   filelist_cache_create(&cmr->filelist_cache.files);
 

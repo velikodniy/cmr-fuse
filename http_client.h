@@ -28,7 +28,7 @@ enum http_method{
  * @param verbose 1 - verbose, 0 - silent mode
  * @return HTTP client handler
  */
-http_client_t *http_init();
+http_client_t *http_init(void);
 
 /**
  * Make HTTP POST request

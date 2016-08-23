@@ -33,7 +33,7 @@ void curl_unlock(CURL *curl, curl_lock_data data, void *userptr) {
   pthread_mutex_unlock((pthread_mutex_t*)userptr);
 }
 
-http_client_t *http_init(){
+http_client_t *http_init(void){
   http_client_t *hc = malloc(sizeof(http_client_t));
   curl_global_init(CURL_GLOBAL_DEFAULT);
   if((hc->curl_share = curl_share_init()) == NULL){
