@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
-project(cmr_fuse)
+project(cmr_fuse VERSION 0.1)
+
+# POLICIES
+
+cmake_policy(SET CMP0048 NEW)
 
 # ------ LIBRARIES ------
 
@@ -27,7 +31,7 @@ include_directories(SYSTEM ${JANSSON_INCLUDE_DIR})
 
 # ------ END LIBRARIES ------
 
-add_definitions(-D_FILE_OFFSET_BITS=64)
+add_definitions(-D_FILE_OFFSET_BITS=64 -DPROJECT_VERSION=${PROJECT_VERSION})
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11 -pedantic -Wall -Wextra")
 
