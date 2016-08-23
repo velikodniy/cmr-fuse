@@ -7,30 +7,15 @@
 #include "filelist_cache.h"
 #include "http_client.h"
 
-int cmr_init(struct cmr_t *cmr,
-	     const char *user, const char *domain, const char *password) {
+int cmr_init(struct cmr_t *cmr, const char *user, const char *domain, const char *password) {
   memset(cmr, 0, sizeof(struct cmr_t));
 
-  size_t
-    luser = 1 + strlen(user),
-    ldomain = 1 + strlen(domain),
-    lpassword = 1 + strlen(password);
-  
-  cmr->user = malloc(luser);
-  cmr->domain = malloc(ldomain);
-  cmr->password = malloc(lpassword);
-
-  if ((cmr->user == NULL) ||
-      (cmr->domain == NULL) ||
-      (cmr->password == NULL)) exit(1);
-
-  strncpy(cmr->user, user, luser);
-  strncpy(cmr->domain, domain, ldomain);
-  strncpy(cmr->password, password, lpassword);
-
+  cmr->user = strdup(user);
+  cmr->domain = strdup(domain);
+  cmr->password = strdup(password);
   cmr->http = http_init(0);
 
-  filelist_cache_create(&(cmr->filelist_cache.files));
+  filelist_cache_create(&cmr->filelist_cache.files);
 
   return 0;
 }
