@@ -157,26 +157,32 @@ static int app_opt_proc(void *data, const char *arg, int key, struct fuse_args *
   return 1;
 }
 
+void fail(const char* message) {
+  fprintf(stderr, "ERROR: %s\n", message);
+  exit(EXIT_FAILURE);
+}
+
 int main(int argc, char **argv)
 {
-
   struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
   struct app_config conf;
 
   conf.config_file_name = NULL;
   fuse_opt_parse(&args, &conf, myfs_opts, app_opt_proc);
 
-  if (conf.config_file_name == NULL) {
-    fprintf(stderr, "You must set a config file with \"-o config=FILE\" option\n");
-    return EXIT_FAILURE;
-  }
+  if (conf.config_file_name == NULL) fail("You must set a config file with \"-o config=FILE\" option");
 
   json_t *root;
   json_error_t error;
   root = json_load_file(conf.config_file_name, 0, &error);
+  if (root == NULL) fail("Cannot open or parse config file");
+
   const char *user = json_string_value(json_object_get(root, "user"));
   const char *domain = json_string_value(json_object_get(root, "domain"));
   const char *password = json_string_value(json_object_get(root, "password"));
+
+  if (user == NULL || domain == NULL || password == NULL)
+    fail("There isn't user/domain/password setting in the config file");
 
   cmr_init(&cmr, user, domain, password);
   cmr_login(&cmr);
