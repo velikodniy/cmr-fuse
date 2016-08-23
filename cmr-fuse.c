@@ -1,16 +1,25 @@
-#include "cmrapi.h"
-#include "list.h"
-#include "filelist_cache.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+
 #include <curl/curl.h>
 #include <jansson.h>
-
+#include <libgen.h>
 #define FUSE_USE_VERSION 30
 #include <fuse.h>
-#include <libgen.h>
-#include <errno.h>
+
+#include "cmrapi.h"
+#include "list.h"
+#include "filelist_cache.h"
+
+#define STR_EXPAND(tok) #tok
+#define STR(tok) STR_EXPAND(tok)
+#ifdef PROJECT_VERSION
+  #define VERSION STR(PROJECT_VERSION)
+#else
+  #define VERSION "???"
+#endif
 
 struct cmr_t cmr;
 
@@ -98,11 +107,72 @@ static struct fuse_operations cmr_ops = {
   .read= cmr_read,
 };
 
+struct app_config {
+  char *config_file_name;
+};
+
+enum {
+  KEY_HELP,
+  KEY_VERSION,
+};
+
+#define APP_OPT(t, p, v) { t, offsetof(struct app_config, p), v }
+
+static struct fuse_opt myfs_opts[] = {
+    APP_OPT("config=%s",           config_file_name, 0),
+
+    FUSE_OPT_KEY("-V",             KEY_VERSION),
+    FUSE_OPT_KEY("--version",      KEY_VERSION),
+    FUSE_OPT_KEY("-h",             KEY_HELP),
+    FUSE_OPT_KEY("--help",         KEY_HELP),
+    FUSE_OPT_END
+};
+
+static int app_opt_proc(void *data, const char *arg, int key, struct fuse_args *outargs)
+{
+  switch (key) {
+    case KEY_HELP:
+      fprintf(stderr,
+              "usage: %s mountpoint [options]\n"
+                  "\n"
+                  "general options:\n"
+                  "    -o opt,[opt...]  mount options\n"
+                  "    -h   --help      print help\n"
+                  "    -V   --version   print version\n"
+                  "\n"
+                  "app options:\n"
+                  "    -o config=STRING\n"
+          , outargs->argv[0]);
+      fuse_opt_add_arg(outargs, "-ho");
+      fuse_main(outargs->argc, outargs->argv, &cmr_ops, NULL);
+      exit(EXIT_SUCCESS);
+
+    case KEY_VERSION:
+      fprintf(stderr, "%s version %s\n", outargs->argv[0], VERSION);
+      fuse_opt_add_arg(outargs, "--version");
+      fuse_main(outargs->argc, outargs->argv, &cmr_ops, NULL);
+      exit(EXIT_SUCCESS);
+  }
+  return 1;
+}
+
 int main(int argc, char **argv)
 {
+
+  struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
+  struct app_config conf;
+
+  conf.config_file_name = NULL;
+  fuse_opt_parse(&args, &conf, myfs_opts, app_opt_proc);
+
+  if (conf.config_file_name == NULL) {
+    fprintf(stderr, "You must set a config file with \"-o config=FILE\" option\n");
+    return EXIT_FAILURE;
+  }
+
   json_t *root;
   json_error_t error;
-  root = json_load_file("login.json", 0, &error);
+  root = json_load_file(conf.config_file_name, 0, &error);
   const char *user = json_string_value(json_object_get(root, "user"));
   const char *domain = json_string_value(json_object_get(root, "domain"));
   const char *password = json_string_value(json_object_get(root, "password"));
@@ -113,7 +183,7 @@ int main(int argc, char **argv)
   cmr_get_token(&cmr);
   cmr_get_shard_urls(&cmr);
 
-  int ret = fuse_main(argc, argv, &cmr_ops, NULL);
+  int ret = fuse_main(args.argc, args.argv, &cmr_ops, NULL);
 
   cmr_finalize(&cmr);
   return ret;
