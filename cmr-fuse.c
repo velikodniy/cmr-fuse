@@ -3,7 +3,6 @@
 #include <string.h>
 #include <errno.h>
 
-#include <curl/curl.h>
 #include <jansson.h>
 #include <libgen.h>
 #define FUSE_USE_VERSION 30
