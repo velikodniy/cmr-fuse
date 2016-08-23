@@ -130,6 +130,8 @@ static struct fuse_opt myfs_opts[] = {
 
 static int app_opt_proc(void *data, const char *arg, int key, struct fuse_args *outargs)
 {
+  (void) data;
+  (void) arg;
   switch (key) {
     case KEY_HELP:
       fprintf(stderr,
