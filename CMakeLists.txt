@@ -39,7 +39,8 @@ add_executable(cmr_fuse
         cmrapi.c
         list.c
         filelist_cache.c
-        http_client.c)
+        http_client.c
+        utils.c)
 
 target_link_libraries(cmr_fuse
         ${CMAKE_THREAD_LIBS_INIT}

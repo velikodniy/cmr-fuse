@@ -6,6 +6,7 @@
 #include "list.h"
 #include "filelist_cache.h"
 #include "http_client.h"
+#include "utils.h"
 
 int cmr_init(struct cmr_t *cmr, const char *user, const char *domain, const char *password) {
   memset(cmr, 0, sizeof(struct cmr_t));
@@ -22,9 +23,8 @@ int cmr_init(struct cmr_t *cmr, const char *user, const char *domain, const char
 
 int cmr_login(struct cmr_t *cmr) {
   const char *request_string = "Login=%s&Domain=%s&Password=%s";
-  size_t request_size = 1 + snprintf(NULL, 0, request_string, cmr->user, cmr->domain, cmr->password);
-  char *request = malloc(request_size);
-  snprintf(request, request_size, request_string, cmr->user, cmr->domain, cmr->password);
+  char *request;
+  asprintf(&request, request_string, cmr->user, cmr->domain, cmr->password);
 
   // do request for cookies
   http_request(cmr->http, HTTP_POST, "https://auth.mail.ru/cgi-bin/auth", NULL, 0, request, NULL);
@@ -70,9 +70,8 @@ int cmr_get_shard_urls(struct cmr_t *cmr) {
   buffer_t buffer;
   buffer_init(&buffer);
   
-  size_t url_size = 1 + snprintf(NULL, 0, "https://cloud.mail.ru/api/v2/dispatcher?token=%s", cmr->token);
-  char *url = malloc(url_size);
-  snprintf(url, url_size, "https://cloud.mail.ru/api/v2/dispatcher?token=%s", cmr->token);
+  char *url;
+  asprintf(&url, "https://cloud.mail.ru/api/v2/dispatcher?token=%s", cmr->token);
 
   http_request(cmr->http, HTTP_GET, url, NULL, 1, NULL, &buffer);
 
@@ -108,9 +107,8 @@ int cmr_list_dir(struct cmr_t *cmr, const char *dir, struct list_t **content) {
 
   char *encoded_dir = curl_easy_escape(cmr->http, dir, 0);
   
-  size_t du_size = 1 + snprintf(NULL, 0, "https://cloud.mail.ru/api/v2/folder?token=%s&home=%s", cmr->token, encoded_dir);
-  char *dir_url = malloc(du_size);
-  snprintf(dir_url, du_size, "https://cloud.mail.ru/api/v2/folder?token=%s&home=%s", cmr->token, encoded_dir);
+  char *dir_url;
+  asprintf(&dir_url, "https://cloud.mail.ru/api/v2/folder?token=%s&home=%s", cmr->token, encoded_dir);
 
   http_request(cmr->http, HTTP_GET, dir_url, NULL, 1, NULL, &buffer);
 
@@ -179,13 +177,8 @@ size_t cmr_get_file(struct cmr_t *cmr, const char *filename, size_t size, off_t 
   
   encoded_filename = curl_easy_escape(cmr->http, filename, 0);
 
-  size_t du_size = 1 + snprintf(NULL, 0, "%s%s", cmr->download, encoded_filename);
-  download_url = malloc(du_size);
-  snprintf(download_url, du_size, "%s%s", cmr->download, encoded_filename);
-
-  size_t rh_size = 1 + snprintf(NULL, 0, "Range: bytes=%ld-%ld", offset, offset+size-1);
-  range_header = malloc(rh_size);
-  snprintf(range_header, rh_size, "Range: bytes=%ld-%ld", offset, offset+size-1);
+  asprintf(&download_url, "%s%s", cmr->download, encoded_filename);
+  asprintf(&range_header, "Range: bytes=%ld-%ld", offset, offset+size-1);
 
   struct curl_slist *headers = NULL;
   headers = curl_slist_append(headers, range_header);
