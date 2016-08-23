@@ -20,8 +20,6 @@ struct cmr_t {
 };
 
 int cmr_init(struct cmr_t *cmr, const char *user, const char *domain, const char *password);
-void cmr_response_ignore(struct cmr_t *cmr);
-void cmr_response_to_buffer(struct cmr_t *cmr, buffer_t *buffer);
 int cmr_login(struct cmr_t *cmr);
 int cmr_sdc_cookies(struct cmr_t *cmr);
 int cmr_get_token(struct cmr_t *cmr);
