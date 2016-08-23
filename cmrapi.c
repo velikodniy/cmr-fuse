@@ -70,11 +70,9 @@ int cmr_get_shard_urls(struct cmr_t *cmr) {
   buffer_t buffer;
   buffer_init(&buffer);
   
-  const char *url_string = "https://cloud.mail.ru/api/v2/dispatcher?token=%s";
-  size_t url_size = 1 + strlen(url_string) + strlen(cmr->token);
+  size_t url_size = 1 + snprintf(NULL, 0, "https://cloud.mail.ru/api/v2/dispatcher?token=%s", cmr->token);
   char *url = malloc(url_size);
-  
-  snprintf(url, url_size, url_string, cmr->token);
+  snprintf(url, url_size, "https://cloud.mail.ru/api/v2/dispatcher?token=%s", cmr->token);
 
   http_request(cmr->http, HTTP_GET, url, NULL, 1, NULL, &buffer);
 
@@ -110,9 +108,9 @@ int cmr_list_dir(struct cmr_t *cmr, const char *dir, struct list_t **content) {
 
   char *encoded_dir = curl_easy_escape(cmr->http, dir, 0);
   
-  size_t du_size = snprintf(NULL, 0, "https://cloud.mail.ru/api/v2/folder?token=%s&home=%s", cmr->token, encoded_dir);
-  char *dir_url = malloc(1 + du_size);
-  snprintf(dir_url, du_size+1, "https://cloud.mail.ru/api/v2/folder?token=%s&home=%s", cmr->token, encoded_dir);
+  size_t du_size = 1 + snprintf(NULL, 0, "https://cloud.mail.ru/api/v2/folder?token=%s&home=%s", cmr->token, encoded_dir);
+  char *dir_url = malloc(du_size);
+  snprintf(dir_url, du_size, "https://cloud.mail.ru/api/v2/folder?token=%s&home=%s", cmr->token, encoded_dir);
 
   http_request(cmr->http, HTTP_GET, dir_url, NULL, 1, NULL, &buffer);
 
@@ -181,13 +179,13 @@ size_t cmr_get_file(struct cmr_t *cmr, const char *filename, size_t size, off_t 
   
   encoded_filename = curl_easy_escape(cmr->http, filename, 0);
 
-  size_t du_size = snprintf(NULL, 0, "%s%s", cmr->download, encoded_filename);
-  download_url = malloc(1 + du_size);
-  snprintf(download_url, du_size+1, "%s%s", cmr->download, encoded_filename);
+  size_t du_size = 1 + snprintf(NULL, 0, "%s%s", cmr->download, encoded_filename);
+  download_url = malloc(du_size);
+  snprintf(download_url, du_size, "%s%s", cmr->download, encoded_filename);
 
-  size_t rh_size = snprintf(NULL, 0, "Range: bytes=%ld-%ld", offset, offset+size-1);
-  range_header = malloc(1 + rh_size);
-  snprintf(range_header, rh_size+1, "Range: bytes=%ld-%ld", offset, offset+size-1);
+  size_t rh_size = 1 + snprintf(NULL, 0, "Range: bytes=%ld-%ld", offset, offset+size-1);
+  range_header = malloc(rh_size);
+  snprintf(range_header, rh_size, "Range: bytes=%ld-%ld", offset, offset+size-1);
 
   struct curl_slist *headers = NULL;
   headers = curl_slist_append(headers, range_header);
