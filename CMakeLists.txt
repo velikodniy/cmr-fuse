@@ -1,10 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 project(cmr_fuse VERSION 0.1)
 
-# POLICIES
-
-cmake_policy(SET CMP0048 NEW)
-
 # ------ LIBRARIES ------
 
 # pthreads
