@@ -22,7 +22,7 @@ int cmr_init(struct cmr_t *cmr, const char *user, const char *domain, const char
 
 int cmr_login(struct cmr_t *cmr) {
   const char *request_string = "Login=%s&Domain=%s&Password=%s";
-  size_t request_size = snprintf(NULL, 0, request_string, cmr->user, cmr->domain, cmr->password);
+  size_t request_size = 1 + snprintf(NULL, 0, request_string, cmr->user, cmr->domain, cmr->password);
   char *request = malloc(request_size);
   snprintf(request, request_size, request_string, cmr->user, cmr->domain, cmr->password);
 
