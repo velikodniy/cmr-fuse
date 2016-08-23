@@ -7,18 +7,6 @@
 #include "filelist_cache.h"
 #include "http_client.h"
 
-char* request_credentials(struct cmr_t *cmr){
-  const char *request_string = "Login=%s&Domain=%s&Password=%s";
-  size_t request_size = 1 + strlen(request_string)
-                        + strlen(cmr->user) + strlen(cmr->domain) + strlen(cmr->password);
-
-  char *request = malloc(request_size);
-
-  snprintf(request, request_size, request_string, cmr->user, cmr->domain, cmr->password);
-
-  return request;
-}
-
 int cmr_init(struct cmr_t *cmr,
 	     const char *user, const char *domain, const char *password) {
   memset(cmr, 0, sizeof(struct cmr_t));
@@ -48,9 +36,15 @@ int cmr_init(struct cmr_t *cmr,
 }
 
 int cmr_login(struct cmr_t *cmr) {
-  char *request = request_credentials(cmr);
+  const char *request_string = "Login=%s&Domain=%s&Password=%s";
+  size_t request_size = snprintf(NULL, 0, request_string, cmr->user, cmr->domain, cmr->password);
+  char *request = malloc(request_size);
+  snprintf(request, request_size, request_string, cmr->user, cmr->domain, cmr->password);
 
+  // do request for cookies
   http_request(cmr->http, HTTP_POST, "https://auth.mail.ru/cgi-bin/auth", NULL, 0, request, NULL);
+
+  free(request);
   return 0;
 }
 
