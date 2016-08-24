@@ -16,7 +16,7 @@ struct cmr_t {
   char token[TOKEN_SIZE];
   char download[URL_SIZE];
   char upload[URL_SIZE];
-  filelist_cache_t filelist_cache;
+  filelist_cache_t *filelist_cache;
 };
 
 int cmr_init(struct cmr_t *cmr, const char *user, const char *domain, const char *password);

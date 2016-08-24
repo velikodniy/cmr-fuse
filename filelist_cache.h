@@ -3,12 +3,14 @@
 #include "htable.h"
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 
 #define PATH_SIZE 256
 
 typedef struct {
   char basedir[PATH_SIZE];
-  HTable files;
+  HTable *files;
+  pthread_mutex_t *lock;
 } filelist_cache_t;
 
 enum file_kind_t {
@@ -24,7 +26,11 @@ typedef struct {
     unsigned long mtime;
 } filelist_cache_data_t;
 
-void filelist_cache_create(HTable *hTable);
-void filelist_cache_insert(HTable *hTable, filelist_cache_data_t *data);
-filelist_cache_data_t *filelist_cache_find(HTable *hTable, const char *path);
-void filelist_cache_free(HTable *hTable);
+filelist_cache_t *filelist_cache_create(void);
+void filelist_cache_insert(filelist_cache_t *cache, filelist_cache_data_t *data);
+filelist_cache_data_t *filelist_cache_find(filelist_cache_t *cache, const char *path);
+void filelist_cache_clean(filelist_cache_t *cache);
+void filelist_cache_free(filelist_cache_t *cache);
+
+void filelist_cache_lock(filelist_cache_t *cache);
+void filelist_cache_unlock(filelist_cache_t *cache);

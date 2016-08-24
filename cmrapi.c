@@ -16,7 +16,7 @@ int cmr_init(struct cmr_t *cmr, const char *user, const char *domain, const char
   cmr->password = strdup(password);
   cmr->http = http_init();
 
-  filelist_cache_create(&cmr->filelist_cache.files);
+  cmr->filelist_cache = filelist_cache_create();
 
   return 0;
 }
@@ -114,8 +114,9 @@ int cmr_list_dir(struct cmr_t *cmr, const char *dir, struct list_t **content) {
 
   list_init(content);
 
-  filelist_cache_free(&(cmr->filelist_cache.files));
-  strncpy(cmr->filelist_cache.basedir, dir, sizeof(cmr->filelist_cache.basedir));
+  filelist_cache_lock(cmr->filelist_cache);
+  filelist_cache_clean(cmr->filelist_cache);
+  strncpy(cmr->filelist_cache->basedir, dir, sizeof(cmr->filelist_cache->basedir));
 
   json_t *root, *status;
   json_error_t error;
@@ -154,10 +155,11 @@ int cmr_list_dir(struct cmr_t *cmr, const char *dir, struct list_t **content) {
       } else
         data.mtime = 0;
 
-      filelist_cache_insert(&cmr->filelist_cache.files, &data);
+      filelist_cache_insert(cmr->filelist_cache, &data);
     }
   }
 
+  filelist_cache_unlock(cmr->filelist_cache);
   json_decref(root); 
   free(dir_url);
   curl_free(encoded_dir);
@@ -204,5 +206,5 @@ void cmr_finalize(struct cmr_t *cmr) {
   free(cmr->domain);
   free(cmr->password);
   http_free(cmr->http);
-  filelist_cache_free(&(cmr->filelist_cache.files));
+  filelist_cache_free(cmr->filelist_cache);
 }

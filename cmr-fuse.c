@@ -31,7 +31,7 @@ static int cmr_getattr(const char *path, struct stat *stbuf) {
 
   char *dir = dirname(strdup(path));
 
-  if (strcmp(dir, cmr.filelist_cache.basedir) != 0) {
+  if (strcmp(dir, cmr.filelist_cache->basedir) != 0) {
     struct list_t *lst;
     cmr_list_dir(&cmr, dir, &lst); // TODO: Ignore list in cmr_list_dir() on lst=NULL
   }
@@ -39,7 +39,7 @@ static int cmr_getattr(const char *path, struct stat *stbuf) {
   memset(stbuf, 0, sizeof(struct stat));
 
   filelist_cache_data_t *data;
-  data = filelist_cache_find(&cmr.filelist_cache.files, path);
+  data = filelist_cache_find(cmr.filelist_cache, path);
 
   if (data == NULL)
     return -ENOENT;
