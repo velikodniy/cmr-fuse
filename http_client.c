@@ -6,6 +6,8 @@
 
 #define RESPONSE_BUFFER_SIZE (1024*1024)
 
+#define USERAGENT "cmrfuse/0.1"
+
 void buffer_init(struct buffer_t *buffer) {
   buffer->data = malloc(RESPONSE_BUFFER_SIZE);
   if (buffer->data == NULL) exit(1);
@@ -93,7 +95,7 @@ int http_request(http_client_t *hc,
   CURLcode res;
 
   curl_easy_setopt(curl, CURLOPT_SHARE, hc->curl_share);
-  curl_easy_setopt(curl, CURLOPT_USERAGENT, "PyMailCloud/(0.2)");
+  curl_easy_setopt(curl, CURLOPT_USERAGENT, USERAGENT);
   curl_easy_setopt(curl, CURLOPT_COOKIEFILE, "");
 
   if(hc->verbose == 1)
