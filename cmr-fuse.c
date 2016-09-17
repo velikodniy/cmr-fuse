@@ -20,7 +20,7 @@
   #define VERSION "???"
 #endif
 
-struct cmr_t cmr;
+cmr_t cmr;
 
 static int cmrops_getattr(const char *path, struct stat *stbuf) {
   if (strcmp(path, "/") == 0) {
