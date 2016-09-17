@@ -22,7 +22,7 @@
 
 struct cmr_t cmr;
 
-static int cmr_getattr(const char *path, struct stat *stbuf) {
+static int cmrops_getattr(const char *path, struct stat *stbuf) {
   if (strcmp(path, "/") == 0) {
     stbuf->st_mode = S_IFDIR | 0755;
     stbuf->st_nlink = 2;
@@ -71,8 +71,8 @@ static int cmr_getattr(const char *path, struct stat *stbuf) {
   return 0;
 }
 
-static int cmr_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
-			 off_t offset, struct fuse_file_info *fi)
+static int cmrops_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
+                          off_t offset, struct fuse_file_info *fi)
 {
   (void) offset;
   (void) fi;
@@ -94,16 +94,16 @@ static int cmr_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
   return 0;
 }
 
-int cmr_read(const char *filename, char *buffer, size_t size, off_t offset, struct fuse_file_info *file_info) {
+int cmrops_read(const char *filename, char *buffer, size_t size, off_t offset, struct fuse_file_info *file_info) {
   (void) file_info;
 
   return cmr_get_file(&cmr, filename, size, offset, buffer);
 }
 
 static struct fuse_operations cmr_ops = {
-  .readdir= cmr_readdir,
-  .getattr= cmr_getattr,
-  .read= cmr_read,
+  .readdir = cmrops_readdir,
+  .getattr = cmrops_getattr,
+  .read    = cmrops_read,
 };
 
 struct app_config {
