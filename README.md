@@ -9,25 +9,23 @@ At the moment cmr-fuse has no optimizations and provides read-only access. Other
 How to build
 ------------
 
-For building you must install development packages for this libraries:
-- libfuse (interface to export filesystem to the kernel),
-- libjansson (JSON parser),
-- libcurl (HTTP queries)
+Currently this project supports macOS only.
+For building you must install fuse-t.
 
 You can build the command line utility with:
-```bash
-cmake .
-make
-```
 
-(Note the dot after `cmake`.)
+```sh
+mkdir build
+cd build
+CMAKE_POLICY_VERSION_MINIMUM=3.5 cmake -G Ninja ..
+ninja
+```
 
 Usage
 -----
 
-Just run a command like
-```
-cmr_fuse -o config=CONFIG PATH
+```sh
+./cmr_fuse -o config=CONFIG PATH
 ```
 
 `CONFIG` — path to your config file. It must be valid JSON document with login, domain and password. For example:
@@ -37,11 +35,6 @@ cmr_fuse -o config=CONFIG PATH
 ```
 
 `PATH` — path to mount point.
-
-You can unmount filesystem with
-```bash
-fusermount -u PATH
-```
 
 You do not need root privileges for mounting or unmounting.
 
