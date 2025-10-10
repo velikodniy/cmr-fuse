@@ -8,7 +8,8 @@
 #include "http_client.h"
 #include "utils.h"
 
-int cmr_init(cmr_t *cmr, const char *user, const char *domain, const char *password) {
+int cmr_init(cmr_t *cmr, const char *user, const char *domain, const char *password)
+{
   memset(cmr, 0, sizeof(struct cmr_t));
 
   cmr->user = strdup(user);
@@ -21,7 +22,8 @@ int cmr_init(cmr_t *cmr, const char *user, const char *domain, const char *passw
   return 0;
 }
 
-int cmr_login(cmr_t *cmr) {
+int cmr_login(cmr_t *cmr)
+{
   const char *request_string = "Login=%s&Domain=%s&Password=%s";
   char *request;
   asprintf(&request, request_string, cmr->user, cmr->domain, cmr->password);
@@ -33,11 +35,13 @@ int cmr_login(cmr_t *cmr) {
   return 0;
 }
 
-int cmr_sdc_cookies(cmr_t *cmr) {
+int cmr_sdc_cookies(cmr_t *cmr)
+{
   return http_request(cmr->http, HTTP_GET, "https://auth.mail.ru/sdc?from=https://cloud.mail.ru/home", NULL, 1, NULL, NULL);
 }
 
-int cmr_get_token(cmr_t *cmr) {
+int cmr_get_token(cmr_t *cmr)
+{
   struct curl_slist *headers = NULL;
   buffer_t buffer;
   buffer_init(&buffer);
@@ -49,27 +53,31 @@ int cmr_get_token(cmr_t *cmr) {
   json_t *root, *status, *body, *token;
   json_error_t error;
   root = json_loads(buffer.data, 0, &error);
-  
+
   status = json_object_get(root, "status");
-  if (json_integer_value(status) == 200) {
+  if (json_integer_value(status) == 200)
+  {
     body = json_object_get(root, "body");
     token = json_object_get(body, "token");
     strncpy(cmr->token, json_string_value(token), sizeof(cmr->token));
-  } else {
+  }
+  else
+  {
     fprintf(stderr, "cmr_get_token() failed: JSON\n");
     return 1;
   }
-  
+
   curl_slist_free_all(headers);
-  json_decref(root); 
+  json_decref(root);
   buffer_free(&buffer);
   return 0;
 }
 
-int cmr_get_shard_urls(cmr_t *cmr) {
+int cmr_get_shard_urls(cmr_t *cmr)
+{
   buffer_t buffer;
   buffer_init(&buffer);
-  
+
   char *url;
   asprintf(&url, "https://cloud.mail.ru/api/v2/dispatcher?token=%s", cmr->token);
 
@@ -79,7 +87,8 @@ int cmr_get_shard_urls(cmr_t *cmr) {
   json_error_t error;
   root = json_loads(buffer.data, 0, &error);
   status = json_object_get(root, "status");
-  if (json_integer_value(status) == 200) {
+  if (json_integer_value(status) == 200)
+  {
     json_t *body, *get, *upload, *first, *url;
 
     body = json_object_get(root, "body");
@@ -93,20 +102,21 @@ int cmr_get_shard_urls(cmr_t *cmr) {
     url = json_object_get(first, "url");
     strncpy(cmr->upload, json_string_value(url), 128);
   }
-  
-  json_decref(root); 
+
+  json_decref(root);
   buffer_free(&buffer);
   free(url);
-  
+
   return 0;
 }
 
-int cmr_list_dir(cmr_t *cmr, const char *dir, struct list_t **content) {
+int cmr_list_dir(cmr_t *cmr, const char *dir, struct list_t **content)
+{
   buffer_t buffer;
   buffer_init(&buffer);
 
   char *encoded_dir = curl_easy_escape(cmr->http, dir, 0);
-  
+
   char *dir_url;
   asprintf(&dir_url, "https://cloud.mail.ru/api/v2/folder?token=%s&home=%s", cmr->token, encoded_dir);
 
@@ -122,14 +132,16 @@ int cmr_list_dir(cmr_t *cmr, const char *dir, struct list_t **content) {
   json_error_t error;
   root = json_loads(buffer.data, 0, &error);
   status = json_object_get(root, "status");
-  if (json_integer_value(status) == 200) {
+  if (json_integer_value(status) == 200)
+  {
     json_t *body, *list, *item, *name, *kind, *size, *mtime, *home;
 
     body = json_object_get(root, "body");
     list = json_object_get(body, "list");
 
     size_t array_size = json_array_size(list);
-    for(size_t i = 0; i < array_size; i++) {
+    for (size_t i = 0; i < array_size; i++)
+    {
       filelist_cache_data_t data;
 
       item = json_array_get(list, i);
@@ -149,10 +161,12 @@ int cmr_list_dir(cmr_t *cmr, const char *dir, struct list_t **content) {
       size = json_object_get(item, "size");
       data.filesize = json_integer_value(size);
 
-      if (data.kind == FK_FILE) {
+      if (data.kind == FK_FILE)
+      {
         mtime = json_object_get(item, "mtime");
         data.mtime = json_integer_value(mtime);
-      } else
+      }
+      else
         data.mtime = 0;
 
       filelist_cache_insert(cmr->filelist_cache, &data);
@@ -160,27 +174,28 @@ int cmr_list_dir(cmr_t *cmr, const char *dir, struct list_t **content) {
   }
 
   filelist_cache_unlock(cmr->filelist_cache);
-  json_decref(root); 
+  json_decref(root);
   free(dir_url);
   curl_free(encoded_dir);
   buffer_free(&buffer);
   return 0;
 }
 
-size_t cmr_get_file(cmr_t *cmr, const char *filename, size_t size, off_t offset, char *buf) {
+size_t cmr_get_file(cmr_t *cmr, const char *filename, size_t size, off_t offset, char *buf)
+{
   if (*filename == '/')
     filename++;
-  
+
   buffer_t buffer;
   buffer_init(&buffer);
 
   char *encoded_filename;
   char *download_url, *range_header;
-  
+
   encoded_filename = curl_easy_escape(cmr->http, filename, 0);
 
   asprintf(&download_url, "%s%s", cmr->download, encoded_filename);
-  asprintf(&range_header, "Range: bytes=%ld-%ld", offset, offset+size-1);
+  asprintf(&range_header, "Range: bytes=%lld-%llu", offset, offset + size - 1);
 
   struct curl_slist *headers = NULL;
   headers = curl_slist_append(headers, range_header);
@@ -192,7 +207,7 @@ size_t cmr_get_file(cmr_t *cmr, const char *filename, size_t size, off_t offset,
   memcpy(buf, buffer.data, buffer.length);
 
   size_t len = buffer.length;
-  
+
   curl_slist_free_all(headers);
   curl_free(encoded_filename);
   free(range_header);
@@ -201,7 +216,8 @@ size_t cmr_get_file(cmr_t *cmr, const char *filename, size_t size, off_t offset,
   return len;
 }
 
-void cmr_finalize(cmr_t *cmr) {
+void cmr_finalize(cmr_t *cmr)
+{
   free(cmr->user);
   free(cmr->domain);
   free(cmr->password);

@@ -1,29 +1,32 @@
 #pragma once
 
-#include "htable.h"
+#include <struct/htable.h>
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
 
 #define PATH_SIZE 256
 
-typedef struct {
+typedef struct
+{
   char basedir[PATH_SIZE];
   HTable *files;
   pthread_mutex_t *lock;
 } filelist_cache_t;
 
-enum file_kind_t {
-    FK_FILE,
-    FK_FOLDER
+enum file_kind_t
+{
+  FK_FILE,
+  FK_FOLDER
 };
 
-typedef struct {
-    HTableNode node;
-    char filename[PATH_SIZE];
-    size_t filesize;
-    enum file_kind_t kind;
-    unsigned long mtime;
+typedef struct
+{
+  HTableNode node;
+  char filename[PATH_SIZE];
+  size_t filesize;
+  enum file_kind_t kind;
+  unsigned long mtime;
 } filelist_cache_data_t;
 
 filelist_cache_t *filelist_cache_create(void);

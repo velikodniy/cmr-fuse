@@ -8,7 +8,8 @@
 #define TOKEN_SIZE (256)
 #define URL_SIZE (256)
 
-typedef struct cmr_t {
+typedef struct cmr_t
+{
   char *user;
   char *domain;
   char *password;

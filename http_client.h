@@ -3,14 +3,16 @@
 #include <curl/curl.h>
 #include <pthread.h>
 
-typedef struct http_client_t {
+typedef struct http_client_t
+{
   CURLSH *curl_share;
   pthread_mutex_t *curl_mutex;
   int verbose;
 } http_client_t;
 
-typedef struct buffer_t {
-  char* data;
+typedef struct buffer_t
+{
+  char *data;
   size_t length;
   size_t size;
 } buffer_t;
@@ -18,7 +20,8 @@ typedef struct buffer_t {
 void buffer_init(buffer_t *buffer);
 void buffer_free(buffer_t *buffer);
 
-enum http_method{
+enum http_method
+{
   HTTP_GET,
   HTTP_POST
 };
