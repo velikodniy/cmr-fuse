@@ -43,3 +43,6 @@ CTestTestfile.cmake
 
 .gitignore
 .idea/
+
+# Build directory
+build/
